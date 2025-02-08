@@ -80,9 +80,9 @@ class UIScale(Enum):
        readable from an average distance.
     """
 
-    LARGE = 0
+    SMALL = 0
     MEDIUM = 1
-    SMALL = 2
+    LARGE = 2
 
 
 class Permission(Enum):

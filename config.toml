@@ -18,10 +18,11 @@ party_name = "BombSquad Community Server"
 # internet connection.
 #authenticate_clients = true
 
-# IDs of server admins. Server admins are not kickable through the default
-# kick vote system and they are able to kick players without a vote. To get
-# your account id, enter 'getaccountid' in settings->advanced->enter-code.
-admins = ["pb-yOuRAccOuNtIdHErE", "pb-aNdMayBeAnotherHeRE"]
+# IDs of server admins. Server admins are not kickable through the
+# default kick vote system and they are able to kick players without
+# a vote. To get your account id, enter 'getaccountid' in
+# settings->advanced->enter-code.
+#admins = ["pb-yOuRAccOuNtIdHErE", "pb-aNdMayBeAnotherHeRE"]
 
 # Whether the default kick-voting system is enabled.
 #enable_default_kick_voting = true
@@ -108,9 +109,9 @@ playlist_code = 12345
 # get 4 wins)
 teams_series_length = 7
 
-# Points to win in free-for-all mode (Points are awarded per game based on
-# performance)
-ffa_series_length = 24
+# Points to win in free-for-all mode (Points are awarded per game
+# based on performance)
+#ffa_series_length = 24
 
 # If you have a custom stats webpage for your server, you can use
 # this to provide a convenient in-game link to it in the

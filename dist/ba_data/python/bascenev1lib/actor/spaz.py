@@ -71,6 +71,7 @@ class Spaz(bs.Actor):
 
     def __init__(
         self,
+        *,
         color: Sequence[float] = (1.0, 1.0, 1.0),
         highlight: Sequence[float] = (0.5, 0.5, 0.5),
         character: str = 'Spaz',
@@ -1195,11 +1196,12 @@ class Spaz(bs.Actor):
                 if self.node:
                     self.node.delete()
             elif self.node:
-                self.node.hurt = 1.0
-                if self.play_big_death_sound and not wasdead:
-                    SpazFactory.get().single_player_death_sound.play()
-                self.node.dead = True
-                bs.timer(2.0, self.node.delete)
+                if not wasdead:
+                    self.node.hurt = 1.0
+                    if self.play_big_death_sound:
+                        SpazFactory.get().single_player_death_sound.play()
+                    self.node.dead = True
+                    bs.timer(2.0, self.node.delete)
 
         elif isinstance(msg, bs.OutOfBoundsMessage):
             # By default we just die here.

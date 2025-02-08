@@ -493,7 +493,7 @@ def get_roles_of_player(arguments, clientid):
         for i in session.sessionplayers:
             if i.inputdevice.client_id == int(arguments[0]):
                 roles = pdata.get_player_roles(i.get_v1_account_id())
-                print(roles)
+
         for role in roles:
             reply = reply + role + ","
         send(reply, clientid)

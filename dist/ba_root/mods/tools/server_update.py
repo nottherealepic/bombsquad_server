@@ -10,13 +10,10 @@ import bascenev1
 from efro.terminal import Clr
 from playersdata import pdata
 
-VERSION = 80
+VERSION = 81
 
 
 def check():
-    print(babase.app.classic)
-    print(babase.app.classic.server)
-
     _thread.start_new_thread(updateProfilesJson, ())
     _thread.start_new_thread(checkChangelog, ())
 

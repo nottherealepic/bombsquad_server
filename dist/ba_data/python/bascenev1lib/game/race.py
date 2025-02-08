@@ -2,7 +2,7 @@
 #
 """Defines Race mini-game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
@@ -138,7 +138,9 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
-        return issubclass(sessiontype, bs.MultiTeamSession)
+        return issubclass(sessiontype, bs.MultiTeamSession) or issubclass(
+            sessiontype, bs.CoopSession
+        )
 
     @override
     @classmethod

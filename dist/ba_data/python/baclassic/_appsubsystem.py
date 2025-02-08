@@ -3,10 +3,10 @@
 """Provides classic app subsystem."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
 import random
 import logging
 import weakref
+from typing import TYPE_CHECKING, override, assert_never
 
 from efro.dataclassio import dataclass_from_dict
 import babase
@@ -26,15 +26,15 @@ from baclassic import _input
 if TYPE_CHECKING:
     from typing import Callable, Any, Sequence
 
+    import bacommon.bs
     from bascenev1lib.actor import spazappearance
     from bauiv1lib.party import PartyWindow
 
-    from baclassic._appdelegate import AppDelegate
     from baclassic._servermode import ServerController
     from baclassic._net import MasterServerCallback
 
 
-class ClassicSubsystem(babase.AppSubsystem):
+class ClassicAppSubsystem(babase.AppSubsystem):
     """Subsystem for classic functionality in the app.
 
     The single shared instance of this app can be accessed at
@@ -45,7 +45,6 @@ class ClassicSubsystem(babase.AppSubsystem):
 
     # pylint: disable=too-many-public-methods
 
-    # noinspection PyUnresolvedReferences
     from baclassic._music import MusicPlayMode
 
     def __init__(self) -> None:
@@ -72,9 +71,13 @@ class ClassicSubsystem(babase.AppSubsystem):
         self.stress_test_update_timer: babase.AppTimer | None = None
         self.stress_test_update_timer_2: babase.AppTimer | None = None
         self.value_test_defaults: dict = {}
-        self.special_offer: dict | None = None
         self.ping_thread_count = 0
         self.allow_ticket_purchases: bool = True
+
+        # Classic-specific account state.
+        self.remove_ads = False
+        self.gold_pass = False
+        self.chest_dock_full = False
 
         # Main Menu.
         self.main_menu_did_initial_transition = False
@@ -93,17 +96,17 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         # We include this extra hash with shared input-mapping names so
         # that we don't share mappings between differently-configured
-        # systems. For instance, different android devices may give different
-        # key values for the same controller type so we keep their mappings
-        # distinct.
+        # systems. For instance, different android devices may give
+        # different key values for the same controller type so we keep
+        # their mappings distinct.
         self.input_map_hash: str | None = None
 
         # Maps.
         self.maps: dict[str, type[bascenev1.Map]] = {}
 
         # Gameplay.
-        self.teams_series_length = 7  # deprecated, left for old mods
-        self.ffa_series_length = 24  # deprecated, left for old mods
+        self.teams_series_length = 7  # Deprecated, left for old mods.
+        self.ffa_series_length = 24  # Deprecated, left for old mods.
         self.coop_session_args: dict = {}
 
         # UI.
@@ -111,14 +114,25 @@ class ClassicSubsystem(babase.AppSubsystem):
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
-        self.delegate: AppDelegate | None = None
         self.party_window: weakref.ref[PartyWindow] | None = None
+        self.main_menu_resume_callbacks: list = []
+        self.saved_ui_state: bauiv1.MainWindowState | None = None
 
         # Store.
         self.store_layout: dict[str, list[dict[str, Any]]] | None = None
         self.store_items: dict[str, dict] | None = None
         self.pro_sale_start_time: int | None = None
         self.pro_sale_start_val: int | None = None
+
+    def add_main_menu_close_callback(self, call: Callable[[], Any]) -> None:
+        """(internal)"""
+
+        # If there's no main window up, just call immediately.
+        if not babase.app.ui_v1.has_main_window():
+            with babase.ContextRef.empty():
+                call()
+        else:
+            self.main_menu_resume_callbacks.append(call)
 
     @property
     def platform(self) -> str:
@@ -154,8 +168,6 @@ class ClassicSubsystem(babase.AppSubsystem):
         from bascenev1lib.actor import spazappearance
         from bascenev1lib import maps as stdmaps
 
-        from baclassic._appdelegate import AppDelegate
-
         plus = babase.app.plus
         assert plus is not None
 
@@ -164,34 +176,13 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         self.music.on_app_loading()
 
-        self.delegate = AppDelegate()
-
-        # Non-test, non-debug builds should generally be blessed; warn if not.
-        # (so I don't accidentally release a build that can't play tourneys)
+        # Non-test, non-debug builds should generally be blessed; warn
+        # if not (so I don't accidentally release a build that can't
+        # play tourneys).
         if not env.debug and not env.test and not plus.is_blessed():
             babase.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
-        # FIXME: This should not be hard-coded.
-        for maptype in [
-            stdmaps.HockeyStadium,
-            stdmaps.FootballStadium,
-            stdmaps.Bridgit,
-            stdmaps.BigG,
-            stdmaps.Roundabout,
-            stdmaps.MonkeyFace,
-            stdmaps.ZigZag,
-            stdmaps.ThePad,
-            stdmaps.DoomShroom,
-            stdmaps.LakeFrigid,
-            stdmaps.TipTop,
-            stdmaps.CragCastle,
-            stdmaps.TowerD,
-            stdmaps.HappyThoughts,
-            stdmaps.StepRightUp,
-            stdmaps.Courtyard,
-            stdmaps.Rampage,
-        ]:
-            bascenev1.register_map(maptype)
+        stdmaps.register_all_maps()
 
         spazappearance.register_appearances()
         bascenev1.init_campaigns()
@@ -206,24 +197,6 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         cfg['launchCount'] = launch_count
         cfg.commit()
-
-        # Run a test in a few seconds to see if we should pop up an existing
-        # pending special offer.
-        def check_special_offer() -> None:
-            assert plus is not None
-
-            from bauiv1lib.specialoffer import show_offer
-
-            if (
-                'pendingSpecialOffer' in cfg
-                and plus.get_v1_account_public_login_id()
-                == cfg['pendingSpecialOffer']['a']
-            ):
-                self.special_offer = cfg['pendingSpecialOffer']['o']
-                show_offer()
-
-        if babase.app.env.gui:
-            babase.apptimer(3.0, check_special_offer)
 
         # If there's a leftover log file, attempt to upload it to the
         # master-server and/or get rid of it.
@@ -261,8 +234,8 @@ class ClassicSubsystem(babase.AppSubsystem):
             from babase import Lstr
             from bascenev1 import NodeActor
 
-            # FIXME: Shouldn't be touching scene stuff here;
-            #  should just pass the request on to the host-session.
+            # FIXME: Shouldn't be touching scene stuff here; should just
+            #  pass the request on to the host-session.
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
@@ -289,8 +262,8 @@ class ClassicSubsystem(babase.AppSubsystem):
         to resume.
         """
 
-        # FIXME: Shouldn't be touching scene stuff here;
-        #  should just pass the request on to the host-session.
+        # FIXME: Shouldn't be touching scene stuff here; should just
+        #  pass the request on to the host-session.
         activity = bascenev1.get_foreground_host_activity()
         if activity is not None:
             with activity.context:
@@ -340,6 +313,9 @@ class ClassicSubsystem(babase.AppSubsystem):
                     )
                     return False
 
+        # Save where we are in the UI to come back to when done.
+        babase.app.classic.save_ui_state()
+
         # Ok, we're good to go.
         self.coop_session_args = {
             'campaign': campaignname,
@@ -374,24 +350,24 @@ class ClassicSubsystem(babase.AppSubsystem):
         assert plus is not None
 
         if reset_ui:
-            babase.app.ui_v1.clear_main_menu_window()
+            babase.app.ui_v1.clear_main_window()
 
         if isinstance(bascenev1.get_foreground_host_session(), MainMenuSession):
-            # It may be possible we're on the main menu but the screen is faded
-            # so fade back in.
+            # It may be possible we're on the main menu but the screen
+            # is faded so fade back in.
             babase.fade_screen(True)
             return
 
         _benchmark.stop_stress_test()  # Stop stress-test if in progress.
 
-        # If we're in a host-session, tell them to end.
-        # This lets them tear themselves down gracefully.
+        # If we're in a host-session, tell them to end. This lets them
+        # tear themselves down gracefully.
         host_session: bascenev1.Session | None = (
             bascenev1.get_foreground_host_session()
         )
         if host_session is not None:
-            # Kick off a little transaction so we'll hopefully have all the
-            # latest account state when we get back to the menu.
+            # Kick off a little transaction so we'll hopefully have all
+            # the latest account state when we get back to the menu.
             plus.add_v1_account_transaction(
                 {'type': 'END_SESSION', 'sType': str(type(host_session))}
             )
@@ -518,11 +494,36 @@ class ClassicSubsystem(babase.AppSubsystem):
             request, 'post', data, callback, response_type
         ).start()
 
-    def get_tournament_prize_strings(self, entry: dict[str, Any]) -> list[str]:
+    def set_tournament_prize_image(
+        self, entry: dict[str, Any], index: int, image: bauiv1.Widget
+    ) -> None:
         """Given a tournament entry, return strings for its prize levels."""
         from baclassic import _tournament
 
-        return _tournament.get_tournament_prize_strings(entry)
+        return _tournament.set_tournament_prize_chest_image(entry, index, image)
+
+    def create_in_game_tournament_prize_image(
+        self,
+        entry: dict[str, Any],
+        index: int,
+        position: tuple[float, float],
+    ) -> None:
+        """Given a tournament entry, return strings for its prize levels."""
+        from baclassic import _tournament
+
+        _tournament.create_in_game_tournament_prize_image(
+            entry, index, position
+        )
+
+    def get_tournament_prize_strings(
+        self, entry: dict[str, Any], include_tickets: bool
+    ) -> list[str]:
+        """Given a tournament entry, return strings for its prize levels."""
+        from baclassic import _tournament
+
+        return _tournament.get_tournament_prize_strings(
+            entry, include_tickets=include_tickets
+        )
 
     def getcampaign(self, name: str) -> bascenev1.Campaign:
         """Return a campaign by name."""
@@ -536,26 +537,21 @@ class ClassicSubsystem(babase.AppSubsystem):
         tip = self.tips.pop()
         return tip
 
-    def run_gpu_benchmark(self) -> None:
-        """Kick off a benchmark to test gpu speeds."""
-        from baclassic._benchmark import run_gpu_benchmark as run
-
-        run()
-
     def run_cpu_benchmark(self) -> None:
         """Kick off a benchmark to test cpu speeds."""
-        from baclassic._benchmark import run_cpu_benchmark as run
+        from baclassic._benchmark import run_cpu_benchmark
 
-        run()
+        run_cpu_benchmark()
 
     def run_media_reload_benchmark(self) -> None:
         """Kick off a benchmark to test media reloading speeds."""
-        from baclassic._benchmark import run_media_reload_benchmark as run
+        from baclassic._benchmark import run_media_reload_benchmark
 
-        run()
+        run_media_reload_benchmark()
 
     def run_stress_test(
         self,
+        *,
         playlist_type: str = 'Random',
         playlist_name: str = '__default__',
         player_count: int = 8,
@@ -563,9 +559,9 @@ class ClassicSubsystem(babase.AppSubsystem):
         attract_mode: bool = False,
     ) -> None:
         """Run a stress test."""
-        from baclassic._benchmark import run_stress_test as run
+        from baclassic._benchmark import run_stress_test
 
-        run(
+        run_stress_test(
             playlist_type=playlist_type,
             playlist_name=playlist_name,
             player_count=player_count,
@@ -684,14 +680,6 @@ class ClassicSubsystem(babase.AppSubsystem):
                 babase.Call(ServerDialogWindow, sddata),
             )
 
-    def ticket_icon_press(self) -> None:
-        """(internal)"""
-        from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
-
-        ResourceTypeInfoWindow(
-            origin_widget=bauiv1.get_special_widget('tickets_info_button')
-        )
-
     def show_url_window(self, address: str) -> None:
         """(internal)"""
         from bauiv1lib.url import ShowURLWindow
@@ -707,6 +695,7 @@ class ClassicSubsystem(babase.AppSubsystem):
     def tournament_entry_window(
         self,
         tournament_id: str,
+        *,
         tournament_activity: bascenev1.Activity | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         delegate: Any = None,
@@ -733,30 +722,32 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         return MainMenuSession
 
-    def continues_window(
-        self,
-        activity: bascenev1.Activity,
-        cost: int,
-        continue_call: Callable[[], Any],
-        cancel_call: Callable[[], Any],
-    ) -> None:
-        """(internal)"""
-        from bauiv1lib.continues import ContinuesWindow
-
-        ContinuesWindow(activity, cost, continue_call, cancel_call)
-
     def profile_browser_window(
         self,
         transition: str = 'in_right',
-        in_main_menu: bool = True,
-        selected_profile: str | None = None,
         origin_widget: bauiv1.Widget | None = None,
+        selected_profile: str | None = None,
     ) -> None:
         """(internal)"""
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
-        ProfileBrowserWindow(
-            transition, in_main_menu, selected_profile, origin_widget
+        main_window = babase.app.ui_v1.get_main_window()
+        if main_window is not None:
+            logging.warning(
+                'profile_browser_window()'
+                ' called with existing main window; should not happen.'
+            )
+            return
+
+        babase.app.ui_v1.set_main_window(
+            ProfileBrowserWindow(
+                transition=transition,
+                selected_profile=selected_profile,
+                origin_widget=origin_widget,
+                minimal_toolbar=True,
+            ),
+            is_top_level=True,
+            suppress_warning=True,
         )
 
     def preload_map_preview_media(self) -> None:
@@ -781,6 +772,9 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         assert app.env.gui
 
+        # Play explicit swish sound so it occurs due to keypresses/etc.
+        # This means we have to disable it for any button or else we get
+        # double.
         bauiv1.getsound('swish').play()
 
         # If it exists, dismiss it; otherwise make a new one.
@@ -794,18 +788,182 @@ class ClassicSubsystem(babase.AppSubsystem):
 
     def device_menu_press(self, device_id: int | None) -> None:
         """(internal)"""
-        from bauiv1lib.mainmenu import MainMenuWindow
+        from bauiv1lib.ingamemenu import InGameMenuWindow
         from bauiv1 import set_ui_input_device
 
         assert babase.app is not None
-        in_main_menu = babase.app.ui_v1.has_main_menu_window()
+        in_main_menu = babase.app.ui_v1.has_main_window()
         if not in_main_menu:
             set_ui_input_device(device_id)
 
+            # Hack(ish). We play swish sound here so it happens for
+            # device presses, but this means we need to disable default
+            # swish sounds for any menu buttons or we'll get double.
             if babase.app.env.gui:
                 bauiv1.getsound('swish').play()
 
-            babase.app.ui_v1.set_main_menu_window(
-                MainMenuWindow().get_root_widget(),
-                from_window=False,  # Disable check here.
+            babase.app.ui_v1.set_main_window(
+                InGameMenuWindow(), is_top_level=True, suppress_warning=True
             )
+
+    def save_ui_state(self) -> None:
+        """Store our current place in the UI."""
+        ui = babase.app.ui_v1
+        mainwindow = ui.get_main_window()
+        if mainwindow is not None:
+            self.saved_ui_state = ui.save_main_window_state(mainwindow)
+        else:
+            self.saved_ui_state = None
+
+    def invoke_main_menu_ui(self) -> None:
+        """Bring up main menu ui."""
+
+        # Bring up the last place we were, or start at the main menu
+        # otherwise.
+        app = bauiv1.app
+        env = app.env
+        with bascenev1.ContextRef.empty():
+
+            assert app.classic is not None
+            if app.env.headless:
+                # UI stuff fails now in headless builds; avoid it.
+                pass
+            else:
+
+                # When coming back from a kiosk-mode game, jump to the
+                # kiosk start screen.
+                if env.demo or env.arcade:
+                    # pylint: disable=cyclic-import
+                    from bauiv1lib.kiosk import KioskWindow
+
+                    app.ui_v1.set_main_window(
+                        KioskWindow(), is_top_level=True, suppress_warning=True
+                    )
+                else:
+                    # If there's a saved ui state, restore that.
+                    if self.saved_ui_state is not None:
+                        app.ui_v1.restore_main_window_state(self.saved_ui_state)
+                    else:
+                        # Otherwise start fresh at the main menu.
+                        from bauiv1lib.mainmenu import MainMenuWindow
+
+                        app.ui_v1.set_main_window(
+                            MainMenuWindow(transition=None),
+                            is_top_level=True,
+                            suppress_warning=True,
+                        )
+
+    @staticmethod
+    def run_bs_client_effects(effects: list[bacommon.bs.ClientEffect]) -> None:
+        """Run client effects sent from the master server."""
+        from baclassic._clienteffect import run_bs_client_effects
+
+        run_bs_client_effects(effects)
+
+    @staticmethod
+    def basic_client_ui_button_label_str(
+        label: bacommon.bs.BasicClientUI.ButtonLabel,
+    ) -> babase.Lstr:
+        """Given a client-ui label, return an Lstr."""
+        import bacommon.bs
+
+        cls = bacommon.bs.BasicClientUI.ButtonLabel
+        if label is cls.UNKNOWN:
+            # Server should not be sending us unknown stuff; make noise
+            # if they do.
+            logging.error(
+                'Got BasicClientUI.ButtonLabel.UNKNOWN; should not happen.'
+            )
+            return babase.Lstr(value='<error>')
+
+        rsrc: str | None = None
+        if label is cls.OK:
+            rsrc = 'okText'
+        elif label is cls.APPLY:
+            rsrc = 'applyText'
+        elif label is cls.CANCEL:
+            rsrc = 'cancelText'
+        elif label is cls.ACCEPT:
+            rsrc = 'gatherWindow.partyInviteAcceptText'
+        elif label is cls.DECLINE:
+            rsrc = 'gatherWindow.partyInviteDeclineText'
+        elif label is cls.IGNORE:
+            rsrc = 'gatherWindow.partyInviteIgnoreText'
+        elif label is cls.CLAIM:
+            rsrc = 'claimText'
+        elif label is cls.DISCARD:
+            rsrc = 'discardText'
+        else:
+            assert_never(label)
+
+        return babase.Lstr(resource=rsrc)
+
+    def required_purchases_for_game(self, game: str) -> list[str]:
+        """Return which purchase (if any) is required for a game."""
+        # pylint: disable=too-many-return-statements
+
+        if game in (
+            'Challenges:Infinite Runaround',
+            'Challenges:Tournament Infinite Runaround',
+        ):
+            # Special case: Pro used to unlock this.
+            return (
+                []
+                if self.accounts.have_pro()
+                else ['upgrades.infinite_runaround']
+            )
+        if game in (
+            'Challenges:Infinite Onslaught',
+            'Challenges:Tournament Infinite Onslaught',
+        ):
+            # Special case: Pro used to unlock this.
+            return (
+                []
+                if self.accounts.have_pro()
+                else ['upgrades.infinite_onslaught']
+            )
+        if game in (
+            'Challenges:Meteor Shower',
+            'Challenges:Epic Meteor Shower',
+        ):
+            return ['games.meteor_shower']
+
+        if game in (
+            'Challenges:Target Practice',
+            'Challenges:Target Practice B',
+        ):
+            return ['games.target_practice']
+
+        if game in (
+            'Challenges:Ninja Fight',
+            'Challenges:Pro Ninja Fight',
+        ):
+            return ['games.ninja_fight']
+
+        if game in ('Challenges:Race', 'Challenges:Pro Race'):
+            return ['games.race']
+
+        if game in ('Challenges:Lake Frigid Race',):
+            return ['games.race', 'maps.lake_frigid']
+
+        if game in (
+            'Challenges:Easter Egg Hunt',
+            'Challenges:Pro Easter Egg Hunt',
+        ):
+            return ['games.easter_egg_hunt']
+
+        return []
+
+    def is_game_unlocked(self, game: str) -> bool:
+        """Is a particular game unlocked?"""
+        plus = babase.app.plus
+        assert plus is not None
+
+        purchases = self.required_purchases_for_game(game)
+        if not purchases:
+            return True
+
+        for purchase in purchases:
+            if not plus.get_v1_account_product_purchased(purchase):
+                return False
+        return True

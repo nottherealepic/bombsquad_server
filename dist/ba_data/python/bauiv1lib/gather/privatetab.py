@@ -22,8 +22,9 @@ from bacommon.net import (
     PrivatePartyConnectResult,
 )
 from bauiv1lib.gather import GatherTab
+from bauiv1lib.play import PlaylistSelectContext
 
-from bauiv1lib.gettokens import GetTokensWindow, show_get_tokens_prompt
+from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -49,6 +50,7 @@ class State:
     """Our core state that persists while the app is running."""
 
     sub_tab: SubTabType = SubTabType.JOIN
+    playlist_select_context: PlaylistSelectContext | None = None
 
 
 class PrivateGatherTab(GatherTab):
@@ -60,7 +62,7 @@ class PrivateGatherTab(GatherTab):
         self._state: State = State()
         self._last_datacode_refresh_time: float | None = None
         self._hostingstate = PrivateHostingState()
-        self._v2state: bacommon.cloud.BSPrivatePartyResponse | None = None
+        self._v2state: bacommon.bs.PrivatePartyResponse | None = None
         self._join_sub_tab_text: bui.Widget | None = None
         self._host_sub_tab_text: bui.Widget | None = None
         self._update_timer: bui.AppTimer | None = None
@@ -97,6 +99,7 @@ class PrivateGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         self._c_width = region_width
         self._c_height = region_height - 20
         self._container = bui.containerwidget(
@@ -336,7 +339,7 @@ class PrivateGatherTab(GatherTab):
                     if plus.accounts.primary is not None:
                         with plus.accounts.primary:
                             plus.cloud.send_message_cb(
-                                bacommon.cloud.BSPrivatePartyMessage(
+                                bacommon.bs.PrivatePartyMessage(
                                     need_datacode=(
                                         self._last_datacode_refresh_time is None
                                         or time.monotonic()
@@ -352,7 +355,7 @@ class PrivateGatherTab(GatherTab):
                     self._last_v2_state_query_time = now
 
     def _on_private_party_query_response(
-        self, response: bacommon.cloud.BSPrivatePartyResponse | Exception
+        self, response: bacommon.bs.PrivatePartyResponse | Exception
     ) -> None:
         if isinstance(response, Exception):
             self._debug_server_comm('got pp v2 state response (err)')
@@ -548,18 +551,19 @@ class PrivateGatherTab(GatherTab):
             edit=self._join_party_code_text, on_return_press_call=btn.activate
         )
 
-    def _on_get_tokens_press(self) -> None:
-        if self._waiting_for_start_stop_response:
-            return
+    # def _on_get_tokens_press(self) -> None:
+    #     if self._waiting_for_start_stop_response:
+    #         return
 
-        # Bring up get-tickets window and then kill ourself (we're on
-        # the overlay layer so we'd show up above it).
-        GetTokensWindow(origin_widget=self._get_tokens_button)
+    #     # Bring up get-tickets window and then kill ourself (we're on
+    #     # the overlay layer so we'd show up above it).
+    #     GetTokensWindow(origin_widget=self._get_tokens_button)
 
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        assert bui.app.classic is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         plus = bui.app.plus
         assert plus is not None
@@ -636,41 +640,7 @@ class PrivateGatherTab(GatherTab):
             and hostingstate.tickets_to_host_now != 0
             and not havegoldpass
         ):
-            if not bui.app.ui_v1.use_toolbars:
-
-                # Currently have no allow_token_purchases value like
-                # we had with tickets; just assuming we always allow.
-                if bool(True):
-                    # if bui.app.classic.allow_ticket_purchases:
-                    self._get_tokens_button = bui.buttonwidget(
-                        parent=self._container,
-                        position=(
-                            self._c_width - 210 + 125,
-                            self._c_height - 44,
-                        ),
-                        autoselect=True,
-                        scale=0.6,
-                        size=(120, 60),
-                        textcolor=(1.0, 0.6, 0.0),
-                        label=bui.charstr(bui.SpecialChar.TOKEN),
-                        color=(0.65, 0.5, 0.8),
-                        on_activate_call=self._on_get_tokens_press,
-                    )
-                else:
-                    self._token_count_text = bui.textwidget(
-                        parent=self._container,
-                        scale=0.6,
-                        position=(
-                            self._c_width - 210 + 125,
-                            self._c_height - 44,
-                        ),
-                        color=(1.0, 0.6, 0.0),
-                        h_align='center',
-                        v_align='center',
-                    )
-
-                # Set initial token count.
-                self._update_currency_ui()
+            pass
 
         v = self._c_height - 90
         if hostingstate.party_code is None:
@@ -689,7 +659,7 @@ class PrivateGatherTab(GatherTab):
                 ),
             )
 
-        v -= 100
+        v -= 90
         if hostingstate.party_code is None:
             # We've got no current party running; show options to set
             # one up.
@@ -718,12 +688,13 @@ class PrivateGatherTab(GatherTab):
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
-            if bui.app.ui_v1.selecting_private_party_playlist:
+            if self._state.playlist_select_context is not None:
+                self._state.playlist_select_context = None
                 bui.containerwidget(
                     edit=self._container,
                     selected_child=self._host_playlist_button,
                 )
-                bui.app.ui_v1.selecting_private_party_playlist = False
+
         else:
             # We've got a current party; show its info.
             bui.textwidget(
@@ -785,7 +756,7 @@ class PrivateGatherTab(GatherTab):
                 autoselect=True,
             )
 
-        v -= 120
+        v -= 110
 
         # Line above the main action button:
 
@@ -952,7 +923,13 @@ class PrivateGatherTab(GatherTab):
 
     def _playlist_press(self) -> None:
         assert self._host_playlist_button is not None
-        self.window.playlist_select(origin_widget=self._host_playlist_button)
+
+        self._state.playlist_select_context = PlaylistSelectContext()
+
+        self.window.playlist_select(
+            origin_widget=self._host_playlist_button,
+            context=self._state.playlist_select_context,
+        )
 
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None
@@ -1104,6 +1081,11 @@ class PrivateGatherTab(GatherTab):
                 return
             self._debug_server_comm('got valid connect response')
             assert cresult.address4 is not None and cresult.port is not None
+
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
+
             bs.connect_to_party(cresult.address4, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')

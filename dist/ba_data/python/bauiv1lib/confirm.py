@@ -22,6 +22,7 @@ class ConfirmWindow:
         action: Callable[[], Any] | None = None,
         width: float = 360.0,
         height: float = 100.0,
+        *,
         cancel_button: bool = True,
         cancel_is_selected: bool = False,
         color: tuple[float, float, float] = (1, 1, 1),
@@ -61,7 +62,7 @@ class ConfirmWindow:
             toolbar_visibility='menu_minimal_no_back',
             parent=bui.get_special_widget('overlay_stack'),
             scale=(
-                2.1
+                1.9
                 if uiscale is bui.UIScale.SMALL
                 else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
