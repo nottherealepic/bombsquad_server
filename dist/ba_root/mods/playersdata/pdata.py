@@ -78,19 +78,19 @@ def get_profiles() -> dict:
                 newpath = f'{PLAYERS_DATA_PATH}profiles-{str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}.json'
                 shutil.copyfile(PLAYERS_DATA_PATH + "profiles.json", newpath)
                 profiles = {"pb-sdf": {}}
-                print("resetting profiles")
+                print("Resetting Profiles.")
             else:
                 f = open(PLAYERS_DATA_PATH + "profiles.json", "r")
                 profiles = json.load(f)
                 f.close()
-                print("loading old proiles.json")
+                print("Loading old profiles.json")
             CacheData.profiles = profiles
 
         except Exception as e:
             f = open(PLAYERS_DATA_PATH + "profiles.json.backup", "r")
             profiles = json.load(f)
             print(e)
-            print("exception happened , falling back to profiles.json.backup")
+            print("Exception occurred, falling back to profiles.json.backup")
             CacheData.profiles = profiles
             f.close()
             return profiles
@@ -118,7 +118,7 @@ def get_blacklist() -> dict:
             with open(PLAYERS_DATA_PATH + "blacklist.json", "r") as f:
                 CacheData.blacklist = json.load(f)
         except:
-            print('error opening blacklist json')
+            print('Error opening blacklist.json')
             return {
                 "ban": {
                     "ids": {},
@@ -461,7 +461,7 @@ def add_player_role(role: str, account_id: str) -> None:
             commit_roles(roles)
 
     else:
-        print("no role such")
+        print(f'Role named {role} does not exist.')
 
 
 def remove_player_role(role: str, account_id: str) -> str:

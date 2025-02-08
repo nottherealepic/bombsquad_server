@@ -33,7 +33,7 @@ def port(file_path):
     # stay local or if it'll also be needed to transmitted to the clients.
 
     ## For local:
-    if False:
+    if bool(False):
         content = content.replace("_babase.screenmessage", "bui.screenmessage")
         content = content.replace("babase.screenmessage", "bui.screenmessage")
         content = content.replace("babase.getsound", "bui.getsound")

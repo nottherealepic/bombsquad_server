@@ -551,7 +551,7 @@ class ServerManagerApp:
 
                 print(f'{Clr.RED}Error loading config file:\n{exc}.{Clr.RST}',
                       flush=True)
-                with open(self._ba_root_path + "/mods/defaults/config.yaml", "r") as infile:
+                with open(self._ba_root_path + "/mods/defaults/config.toml", "r") as infile:
                     default_file = infile.read()
                 with open(self._config_path, "w") as outfile:
                     outfile.write(default_file)
