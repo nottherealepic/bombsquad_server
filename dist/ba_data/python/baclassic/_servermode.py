@@ -390,7 +390,7 @@ class ServerController:
                 f' ({app.env.engine_build_number})'
                 f' entering server-mode {curtimestr}{Clr.RST}'
             )
-            logging.info(startupmsg)
+            print(startupmsg)
 
         if sessiontype is bascenev1.FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name
