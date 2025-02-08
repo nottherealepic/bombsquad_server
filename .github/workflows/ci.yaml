@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - public-server
-      - api8
+      - api9
 
 jobs:
   run_server_binary:
