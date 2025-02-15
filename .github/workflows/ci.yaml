@@ -32,7 +32,7 @@ jobs:
         if grep -E "Exception|RuntimeError" server-output.log; then 
           echo "Error message found. Check server-output.log for details."
           exit 1
-        elif ! grep -q "entering server-mode" server-output.log; then
+        elif ! grep -q "Server started" server-output.log; then
           echo "Success message not found in server's output."
           exit 1
         fi
