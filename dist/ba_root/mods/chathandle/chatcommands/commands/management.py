@@ -385,13 +385,13 @@ def nv(arguments):
 
 
 def tint(arguments):
-    print(len(arguments))
+    
     if len(arguments) == 3:
         args = arguments
         r, g, b = float(args[0]), float(args[1]), float(args[2])
         try:
             # print(dir(activity.globalsnode))
-            print(r, g, b)
+            
             activity = bs.get_foreground_host_activity()
             activity.globalsnode.tint = (r, g, b)
         except:
