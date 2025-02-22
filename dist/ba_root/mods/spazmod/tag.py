@@ -48,7 +48,6 @@ def addhp(node, spaz):
                      position=(0, 1.75, 0), shad=1.4)
         else:
             spaz.hptimer = None
-
     spaz.hptimer = bs.Timer(2, babase.Call(
         showHP), repeat=True)
 

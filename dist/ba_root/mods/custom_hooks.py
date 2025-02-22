@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING
 
 import babase
 import bascenev1 as bs
+import _bascenev1
+from baclassic._appmode import ClassicAppMode
 import bauiv1 as bui
 import setting
 from baclassic._servermode import ServerController
@@ -130,11 +132,6 @@ def bootstraping():
     """Bootstarps the server."""
     logging.warning("Bootstraping mods...")
     # server related
-    # _bascenev1.set_server_name(settings["HostName"])
-    # _bascenev1.set_transparent_kickvote(settings["ShowKickVoteStarterName"])
-    # _bascenev1.set_kickvote_msg_type(settings["KickVoteMsgType"])
-    # bs.hide_player_device_id(settings["Anti-IdRevealer"]) TODO add call in
-    # cpp
 
     # check for auto update stats
     _thread.start_new_thread(mystats.refreshStats, ())
@@ -417,3 +414,25 @@ def wrap_player_spaz_init(original_class):
 
 
 playerspaz.PlayerSpaz = wrap_player_spaz_init(playerspaz.PlayerSpaz)
+
+original_classic_app_mode_activate = ClassicAppMode.on_activate
+
+
+def new_classic_app_mode_activate(*args, **kwargs):
+    # Call the original function
+    result = original_classic_app_mode_activate(*args, **kwargs)
+
+    # Perform additional actions after the original function call
+    on_classic_app_mode_active()
+
+    return result
+
+
+ClassicAppMode.on_activate = new_classic_app_mode_activate
+
+
+def on_classic_app_mode_active():
+    _bascenev1.set_server_name(settings["HostName"])
+    _bascenev1.set_transparent_kickvote(settings["ShowKickVoteStarterName"])
+    _bascenev1.set_kickvote_msg_type(settings["KickVoteMsgType"])
+    _bascenev1.hide_player_device_id(settings["Anti-IdRevealer"])
