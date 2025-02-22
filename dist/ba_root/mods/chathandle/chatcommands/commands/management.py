@@ -14,7 +14,7 @@ import bascenev1 as bs
 from tools import logger
 
 
-Commands = ['recents', 'info', 'createteam', 'showid', 'hideid', 'lm', 'gp',
+Commands = ['unban', 'recents', 'info', 'createteam', 'showid', 'hideid', 'lm', 'gp',
             'party', 'quit', 'kickvote', 'maxplayers', 'playlist', 'ban',
             'kick', 'remove', 'end', 'quit', 'mute', 'unmute', 'slowmo', 'nv',
             'dv', 'pause', 'tint',
@@ -42,6 +42,8 @@ def ExcelCommand(command, arguments, clientid, accountid):
         None
     """
     match command:
+        case 'unban':
+            unban(arguments)
         case 'recents':
             get_recents(clientid)
         case 'info':
@@ -288,6 +290,19 @@ def ban(arguments):
         pass
 
 
+def unban(arguments):
+    try:
+        for account in serverdata.recents:
+            if account['client_id'] == int(arguments[0]):
+                pdata.unban_player(
+                    account["pbid"])
+                logger.log(
+                    f'unbanned {account["pbid"]} by chat command, recents')
+
+    except:
+        pass
+
+
 def quit(arguments):
     if arguments == [] or arguments == ['']:
         babase.quit()
@@ -370,28 +385,28 @@ def nv(arguments):
         activity = bs.get_foreground_host_activity()
         nv_tint = (0.5, 0.5, 1.0)
         nv_ambient = (1.5, 1.5, 1.5)
-        
+
         if is_close(activity.globalsnode.tint, nv_tint):
             activity.globalsnode.tint = (1, 1, 1)
-            #adding ambient color to imitate moonlight reflection on objects
+            # adding ambient color to imitate moonlight reflection on objects
             activity.globalsnode.ambient_color = (1, 1, 1)
-            #print(activity.globalsnode.tint)
+            # print(activity.globalsnode.tint)
         else:
             activity.globalsnode.tint = nv_tint
             activity.globalsnode.ambient_color = nv_ambient
-            #print(activity.globalsnode.tint)
+            # print(activity.globalsnode.tint)
     except:
         return
 
 
 def tint(arguments):
-    
+
     if len(arguments) == 3:
         args = arguments
         r, g, b = float(args[0]), float(args[1]), float(args[2])
         try:
             # print(dir(activity.globalsnode))
-            
+
             activity = bs.get_foreground_host_activity()
             activity.globalsnode.tint = (r, g, b)
         except:

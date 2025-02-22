@@ -160,7 +160,7 @@ def get_detailed_info(pbid):
     profiles = get_profiles()
     for key, value in profiles.items():
         if ("lastIP" in value and value["lastIP"] == ip) or (
-            "deviceUUID" in value and value["deviceUUID"] == deviceid):
+                "deviceUUID" in value and value["deviceUUID"] == deviceid):
             otheraccounts += ' '.join(value["display_string"])
     return f"Accounts:{linked_accounts} \n other accounts {otheraccounts} \n created on {dob}"
 
@@ -218,7 +218,7 @@ def add_profile(
     checkSpammer({'id': account_id, 'display': display_string,
                   'ip': ip, 'device': device_id})
     if device_id in get_blacklist()["ban"]["deviceids"] or account_id in \
-        get_blacklist()["ban"]["ids"]:
+            get_blacklist()["ban"]["ids"]:
         bs.disconnect_client(cid)
     serverdata.clients[account_id]["deviceUUID"] = device_id
 
@@ -314,6 +314,11 @@ def unban_player(account_id):
     if account_id in current_profiles:
         ip = current_profiles[account_id]["lastIP"]
         device_id = current_profiles[account_id]["deviceUUID"]
+    else:
+        for account in serverdata.recents:
+            if account["pbid"] == account_id:
+                ip = account["ip"]
+                device_id = account["device_uuid"]
 
     CacheData.blacklist["ban"]["ips"].pop(ip, None)
     CacheData.blacklist["ban"]["deviceids"].pop(device_id, None)
@@ -607,7 +612,7 @@ def get_custom() -> dict:
             custom["customeffects"][account_id] = [
                 custom["customeffects"][account_id]] if type(
                 custom["customeffects"][account_id]) is str else \
-            custom["customeffects"][account_id]
+                custom["customeffects"][account_id]
 
     return CacheData.custom
 
@@ -626,7 +631,7 @@ def set_effect(effect: str, account_id: str) -> None:
     if account_id in custom["customeffects"]:
         effects = [custom["customeffects"][account_id]] if type(
             custom["customeffects"][account_id]) is str else \
-        custom["customeffects"][account_id]
+            custom["customeffects"][account_id]
         effects.append(effect)
         custom["customeffects"][account_id] = effects
     else:
