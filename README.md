@@ -11,8 +11,8 @@ Migrated from API 7 TO API 8 , this might be unstable and missing some features.
 - Basic knowledge of Linux
 - A VPS (e.g. [Amazon Web Services](https://aws.amazon.com/), [Microsoft Azure](https://portal.azure.com/))
 - Any Linux distribution.
-  - It is recommended to use Ubuntu.
-- Python 3.10
+  - It is recommended to use Ubuntu (minimum Ubuntu 22).
+- Python 3.12
 - 1 GB free Memory (Recommended 2 GB)
 
 ## Getting Started
@@ -44,6 +44,7 @@ Making the server files executable.
 ```
 chmod 777 bombsquad_server
 chmod 777 dist/bombsquad_headless
+chmod 777 dist/bombsquad_headless_aarch64
 ```
 Starting the server
 ```
