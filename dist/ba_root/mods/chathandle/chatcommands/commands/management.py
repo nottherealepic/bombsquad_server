@@ -41,108 +41,81 @@ def ExcelCommand(command, arguments, clientid, accountid):
     Returns:
         None
     """
-    if command in ['recents']:
-        get_recents(clientid)
-    if command in ['info']:
-        get_player_info(arguments, clientid)
-    if command in ['maxplayers', 'max']:
-        changepartysize(arguments)
-    if command in ['createteam']:
-        create_team(arguments)
-    elif command == 'playlist':
-        changeplaylist(arguments)
-    elif command == 'kick':
-        kick(arguments)
-    elif command == 'ban':
-        ban(arguments)
-    elif command in ['end', 'next']:
-        end(arguments)
-    elif command == 'kickvote':
-        kikvote(arguments, clientid)
-    elif command == 'hideid':
-        hide_player_spec()
-    elif command == "showid":
-        show_player_spec()
-    elif command == 'lm':
-        last_msgs(clientid)
-
-    elif command == 'gp':
-        get_profiles(arguments, clientid)
-
-    elif command == 'party':
-        party_toggle(arguments)
-
-    elif command in ['quit', 'restart']:
-        quit(arguments)
-
-    elif command in ['mute', 'mutechat']:
-        mute(arguments)
-
-    elif command in ['unmute', 'unmutechat']:
-        un_mute(arguments)
-
-    elif command in ['remove', 'rm']:
-        remove(arguments)
-
-    elif command in ['sm', 'slow', 'slowmo']:
-        slow_motion()
-
-    elif command in ['nv', 'night']:
-        nv(arguments)
-
-    elif command in ['dv', 'day']:
-        dv(arguments)
-
-    elif command == 'tint':
-        tint(arguments)
-
-    elif command in ['pause', 'pausegame']:
-        pause()
-
-    elif command in ['cameraMode', 'camera_mode', 'rotate_camera']:
-        rotate_camera()
-
-    elif command == 'createrole':
-        create_role(arguments)
-
-    elif command == 'addrole':
-        add_role_to_player(arguments)
-
-    elif command == 'removerole':
-        remove_role_from_player(arguments)
-
-    elif command == 'getroles':
-        get_roles_of_player(arguments, clientid)
-
-    elif command in ['addcommand', 'addcmd']:
-        add_command_to_role(arguments)
-
-    elif command in ['removecommand', 'removecmd']:
-        remove_command_to_role(arguments)
-
-    elif command == 'changetag':
-        change_role_tag(arguments)
-
-    elif command == 'customtag':
-        set_custom_tag(arguments)
-
-    elif command in ['customeffect', 'effect']:
-        set_custom_effect(arguments)
-
-    elif command in ['removetag']:
-        remove_custom_tag(arguments)
-
-    elif command in ['removeeffect']:
-        remove_custom_effect(arguments)
-
-    # elif command in ['add', 'whitelist']:
-    #     whitelst_it(accountid, arguments)
-
-    elif command == 'spectators':
-        spectators(arguments)
-
-    elif command == 'lobbytime':
-        change_lobby_check_time(arguments)
+    match command:
+        case 'recents':
+            get_recents(clientid)
+        case 'info':
+            get_player_info(arguments, clientid)
+        case 'maxplayers' | 'max':
+            changepartysize(arguments)
+        case 'createteam':
+            create_team(arguments)
+        case 'playlist':
+            changeplaylist(arguments)
+        case 'kick':
+            kick(arguments)
+        case 'ban':
+            ban(arguments)
+        case 'end' | 'next':
+            end(arguments)
+        case 'kickvote':
+            kikvote(arguments, clientid)
+        case 'hideid':
+            hide_player_spec()
+        case 'showid':
+            show_player_spec()
+        case 'lm':
+            last_msgs(clientid)
+        case 'gp':
+            get_profiles(arguments, clientid)
+        case 'party':
+            party_toggle(arguments)
+        case 'quit' | 'restart':
+            quit(arguments)
+        case 'mute' | 'mutechat':
+            mute(arguments)
+        case 'unmute' | 'unmutechat':
+            un_mute(arguments)
+        case 'remove' | 'rm':
+            remove(arguments)
+        case 'sm' | 'slow' | 'slowmo':
+            slow_motion()
+        case 'nv' | 'night':
+            nv(arguments)
+        case 'tint':
+            tint(arguments)
+        case 'pause' | 'pausegame':
+            pause()
+        case 'cameraMode' | 'camera_mode' | 'rotate_camera':
+            rotate_camera()
+        case 'createrole':
+            create_role(arguments)
+        case 'addrole':
+            add_role_to_player(arguments)
+        case 'removerole':
+            remove_role_from_player(arguments)
+        case 'getroles':
+            get_roles_of_player(arguments, clientid)
+        case 'addcommand' | 'addcmd':
+            add_command_to_role(arguments)
+        case 'removecommand' | 'removecmd':
+            remove_command_to_role(arguments)
+        case 'changetag':
+            change_role_tag(arguments)
+        case 'customtag':
+            set_custom_tag(arguments)
+        case 'customeffect' | 'effect':
+            set_custom_effect(arguments)
+        case 'removetag':
+            remove_custom_tag(arguments)
+        case 'removeeffect':
+            remove_custom_effect(arguments)
+        case 'spectators':
+            spectators(arguments)
+        case 'lobbytime':
+            change_lobby_check_time(arguments)
+        case _:
+            pass
 
 
 def create_team(arguments):
@@ -287,8 +260,9 @@ def party_toggle(arguments):
 def end(arguments):
     if arguments == [] or arguments == ['']:
         try:
-            with _babase.Context(_babase.get_foreground_host_activity()):
-                _babase.get_foreground_host_activity().end_game()
+            game = bs.get_foreground_host_activity()
+            with game.context:
+                game.end_game()
         except:
             pass
 
@@ -389,49 +363,39 @@ def slow_motion():
 
 
 def nv(arguments):
-    activity = _babase.get_foreground_host_activity()
+    def is_close(a, b, tol=1e-5):
+        return all(abs(x - y) < tol for x, y in zip(a, b))
 
-    if arguments == [] or arguments == ['']:
-
-        if activity.globalsnode.tint != (0.5, 0.7, 1.0):
-            activity.globalsnode.tint = (0.5, 0.7, 1.0)
-        else:
-            # will fix this soon
-            pass
-
-    elif arguments[0] == 'off':
-        if activity.globalsnode.tint != (0.5, 0.7, 1.0):
-            return
-        else:
-            pass
-
-
-def dv(arguments):
-    activity = _babase.get_foreground_host_activity()
-
-    if arguments == [] or arguments == ['']:
-
-        if activity.globalsnode.tint != (1, 1, 1):
+    try:
+        activity = bs.get_foreground_host_activity()
+        nv_tint = (0.5, 0.5, 1.0)
+        nv_ambient = (1.5, 1.5, 1.5)
+        
+        if is_close(activity.globalsnode.tint, nv_tint):
             activity.globalsnode.tint = (1, 1, 1)
+            #adding ambient color to imitate moonlight reflection on objects
+            activity.globalsnode.ambient_color = (1, 1, 1)
+            #print(activity.globalsnode.tint)
         else:
-            # will fix this soon
-            pass
-
-    elif arguments[0] == 'off':
-        if activity.globalsnode.tint != (1, 1, 1):
-            return
-        else:
-            pass
+            activity.globalsnode.tint = nv_tint
+            activity.globalsnode.ambient_color = nv_ambient
+            #print(activity.globalsnode.tint)
+    except:
+        return
 
 
 def tint(arguments):
-
-    activity = _babase.get_foreground_host_activity()
-
+    
     if len(arguments) == 3:
-        if all(isinstance(val, (int, float)) for val in arguments):
-            activity.globalsnode.tint = (
-                arguments[0], arguments[1], arguments[2])
+        args = arguments
+        r, g, b = float(args[0]), float(args[1]), float(args[2])
+        try:
+            # print(dir(activity.globalsnode))
+            
+            activity = bs.get_foreground_host_activity()
+            activity.globalsnode.tint = (r, g, b)
+        except:
+            return
 
 
 def pause():
