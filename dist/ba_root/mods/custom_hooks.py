@@ -1,6 +1,6 @@
 """Custom hooks to pull of the in-game functions."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 # pylint: disable=import-error
@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING
 
 import babase
 import bascenev1 as bs
+import _bascenev1
+from baclassic._appmode import ClassicAppMode
 import bauiv1 as bui
 import setting
 from baclassic._servermode import ServerController
@@ -70,7 +72,7 @@ class modSetup(babase.Plugin):
         if (settings["useV2Account"]):
 
             if (plus.get_v1_account_state() ==
-                'signed_in' and plus.get_v1_account_type() == 'V2'):
+                    'signed_in' and plus.get_v1_account_type() == 'V2'):
                 logging.debug("Account V2 is active")
             else:
                 logging.warning("Account V2 login require ....stay tuned.")
@@ -130,11 +132,6 @@ def bootstraping():
     """Bootstarps the server."""
     logging.warning("Bootstraping mods...")
     # server related
-    # _bascenev1.set_server_name(settings["HostName"])
-    # _bascenev1.set_transparent_kickvote(settings["ShowKickVoteStarterName"])
-    # _bascenev1.set_kickvote_msg_type(settings["KickVoteMsgType"])
-    # bs.hide_player_device_id(settings["Anti-IdRevealer"]) TODO add call in
-    # cpp
 
     # check for auto update stats
     _thread.start_new_thread(mystats.refreshStats, ())
@@ -337,21 +334,21 @@ def shutdown(func) -> None:
             "Server will restart on next opportunity. (series end)")
         _babase.restart_scheduled = True
         bs.get_foreground_host_activity().restart_msg = bs.newnode('text',
-                                                                        attrs={
-                                                                            'text': "Server going to restart after this series.",
-                                                                            'flatness': 1.0,
-                                                                            'h_align': 'right',
-                                                                            'v_attach': 'bottom',
-                                                                            'h_attach': 'right',
-                                                                            'scale': 0.5,
-                                                                            'position': (
-                                                                            -25,
-                                                                            54),
-                                                                            'color': (
-                                                                            1,
-                                                                            0.5,
-                                                                            0.7)
-                                                                        })
+                                                                   attrs={
+                                                                       'text': "Server going to restart after this series.",
+                                                                       'flatness': 1.0,
+                                                                       'h_align': 'right',
+                                                                       'v_attach': 'bottom',
+                                                                       'h_attach': 'right',
+                                                                       'scale': 0.5,
+                                                                       'position': (
+                                                                           -25,
+                                                                           54),
+                                                                       'color': (
+                                                                           1,
+                                                                           0.5,
+                                                                           0.7)
+                                                                   })
         func(*args, **kwargs)
 
     return wrapper
@@ -373,9 +370,9 @@ def on_player_request(func) -> bool:
                 count += 1
         if count >= settings["maxPlayersPerDevice"]:
             bs.broadcastmessage("Reached max players limit per device",
-                                 clients=[
-                                     player.inputdevice.client_id],
-                                 transient=True, )
+                                clients=[
+                                    player.inputdevice.client_id],
+                                transient=True, )
             return False
         return func(*args, **kwargs)
 
@@ -417,3 +414,25 @@ def wrap_player_spaz_init(original_class):
 
 
 playerspaz.PlayerSpaz = wrap_player_spaz_init(playerspaz.PlayerSpaz)
+
+original_classic_app_mode_activate = ClassicAppMode.on_activate
+
+
+def new_classic_app_mode_activate(*args, **kwargs):
+    # Call the original function
+    result = original_classic_app_mode_activate(*args, **kwargs)
+
+    # Perform additional actions after the original function call
+    on_classic_app_mode_active()
+
+    return result
+
+
+ClassicAppMode.on_activate = new_classic_app_mode_activate
+
+
+def on_classic_app_mode_active():
+    _bascenev1.set_server_name(settings["HostName"])
+    _bascenev1.set_transparent_kickvote(settings["ShowKickVoteStarterName"])
+    _bascenev1.set_kickvote_msg_type(settings["KickVoteMsgType"])
+    _bascenev1.hide_player_device_id(settings["Anti-IdRevealer"])

@@ -4,14 +4,20 @@
 
 from __future__ import annotations
 
+from typing import override
+
 import bascenev1 as bs
 import bauiv1 as bui
 
 
-class KioskWindow(bui.Window):
+class KioskWindow(bui.MainWindow):
     """Kiosk mode window."""
 
-    def __init__(self, transition: str = 'in_right'):
+    def __init__(
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ):
         # pylint: disable=too-many-locals, too-many-statements
         from bauiv1lib.confirm import QuitWindow
 
@@ -26,11 +32,13 @@ class KioskWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition=transition,
+                # transition=transition,
                 on_cancel_call=_do_cancel,
                 background=False,
                 stack_offset=(0, -130),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._r = 'kioskWindow'
@@ -353,6 +361,20 @@ class KioskWindow(bui.Window):
             1.0, bui.WeakCall(self._update), repeat=True
         )
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _restore_state(self) -> None:
         assert bui.app.classic is not None
         sel_name = bui.app.ui_v1.window_states.get(type(self))
@@ -501,17 +523,16 @@ class KioskWindow(bui.Window):
             bui.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _do_full_menu(self) -> None:
+        # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         assert bui.app.classic is not None
 
         self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
         bui.app.classic.did_menu_intro = True  # prevent delayed transition-in
-        bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow().get_root_widget(), from_window=self._root_widget
-        )
+
+        self.main_window_replace(MainMenuWindow())

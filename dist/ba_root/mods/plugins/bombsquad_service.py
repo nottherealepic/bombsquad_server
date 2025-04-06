@@ -28,11 +28,12 @@ class BsDataThread(object):
     def __init__(self):
         global stats
         stats["name"] = _babase.app.classic.server._config.party_name
-        stats["discord"] = "https://discord.gg/ucyaesh"
+        stats["discord"] = get_server_settings(
+        )["ballistica_web"]["server_password"]
         stats["vapidKey"] = notification_manager.get_vapid_keys()["public_key"]
 
         self.refresh_stats_cache_timer = bs.AppTimer(8, babase.Call(
-            self.refreshStats) , repeat=True)
+            self.refreshStats), repeat=True)
         self.refresh_leaderboard_cache_timer = bs.AppTimer(10, babase.Call(
             self.refreshLeaderboard), repeat=True)
 
@@ -116,7 +117,8 @@ class BsDataThread(object):
         return data
 
 
-BsDataThread()
+v = bs.AppTimer(5, babase.Call(
+    BsDataThread))
 
 
 def get_stats():
@@ -191,7 +193,7 @@ def search_player_profile(search_key: str, db: str):
         if (search_key == key or
             any(search_key.lower() in s.lower() for s in
                 selectedDB[key].get("display_string", [])) or
-            search_key.lower() in selectedDB[key].get("name", "").lower()):
+                search_key.lower() in selectedDB[key].get("name", "").lower()):
             matching_objects[key] = selectedDB[key]
             count += 1
             if count > 50:
@@ -216,15 +218,15 @@ def get_player_details(account_id: str):
         isBanned = True
         extra_info += " , Banned for > " + haveBanReason
     if account_id in pdata.get_blacklist()[
-        "muted-ids"] and current_time < datetime.strptime(
-        pdata.get_blacklist()["muted-ids"][account_id]["till"],
-        "%Y-%m-%d %H:%M:%S"):
+            "muted-ids"] and current_time < datetime.strptime(
+            pdata.get_blacklist()["muted-ids"][account_id]["till"],
+            "%Y-%m-%d %H:%M:%S"):
         isMuted = True
         extra_info += f', Muted for > {pdata.get_blacklist()["muted-ids"][account_id]["reason"]} , till > {pdata.get_blacklist()["muted-ids"][account_id]["till"]} ,'
     if account_id in pdata.get_blacklist()[
-        "kick-vote-disabled"] and current_time < datetime.strptime(
-        pdata.get_blacklist()["kick-vote-disabled"][account_id]["till"],
-        "%Y-%m-%d %H:%M:%S"):
+            "kick-vote-disabled"] and current_time < datetime.strptime(
+            pdata.get_blacklist()["kick-vote-disabled"][account_id]["till"],
+            "%Y-%m-%d %H:%M:%S"):
         isKickVoteDisabled = True
         extra_info += f', Kick vote disabled for > {pdata.get_blacklist()["kick-vote-disabled"][account_id]["reason"]} , till > {pdata.get_blacklist()["kick-vote-disabled"][account_id]["till"]} '
 

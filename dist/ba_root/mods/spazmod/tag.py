@@ -25,7 +25,7 @@ def addtag(node, player):
                 tag = roles[role]['tag']
                 col = (
                     0.7, 0.7, 0.7) if 'tagcolor' not in roles[role] else \
-                roles[role]['tagcolor']
+                    roles[role]['tagcolor']
                 break
     if tag:
         Tag(node, tag, col)
@@ -48,8 +48,7 @@ def addhp(node, spaz):
                      position=(0, 1.75, 0), shad=1.4)
         else:
             spaz.hptimer = None
-
-    spaz.hptimer = bs.Timer(100, babase.Call(
+    spaz.hptimer = bs.Timer(2, babase.Call(
         showHP), repeat=True)
 
 
@@ -165,5 +164,5 @@ class HitPoint(object):
             self._Text.delete()
             m.delete()
 
-        self.timer = bs.Timer(1.2, babase.Call(
+        self.timer = bs.Timer(2, babase.Call(
             a))

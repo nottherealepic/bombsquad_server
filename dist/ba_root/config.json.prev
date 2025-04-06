@@ -127,21 +127,39 @@
  "Auto Account State": "Server",
  "Auto Balance Teams": true,
  "Campaigns": {},
- "Default Player Profiles": {},
+ "Custom Team Colors": [
+  [
+   0.8,
+   0.0,
+   0.6
+  ],
+  [
+   0.0,
+   1.0,
+   0.8
+  ]
+ ],
+ "Custom Team Names": [
+  "ladoo",
+  "barfi"
+ ],
+ "Default Player Profiles": {
+  "Client Input Device #1": "__account__"
+ },
  "FFA Series Length": 24,
- "Fleet Zone Ping Last Flush Time": 1716129094,
+ "Fleet Zone Ping Last Flush Time": 1739040124,
  "Fleet Zone Pings": {
   "prod": {
-   "delhi.v4": 11.398733474327724,
-   "hyderabad.v4": 37.2009791625173,
-   "mumbai.v4": 73.59297864995176
+   "delhi.v4": 14.569117998262962,
+   "hyderabad.v4": 40.82055802804358,
+   "mumbai.v4": 35.66394542322196
   }
  },
  "Free-for-All Playlist Randomize": true,
  "Free-for-All Playlist Selection": "__default__",
  "Free-for-All Playlists": {},
  "Idle Exit Minutes": null,
- "Local Account Name": "Server17290774",
+ "Local Account Name": "Server20640263",
  "Player Profiles": {
   "__account__": {
    "character": "Spaz",
@@ -175,7 +193,7 @@
  "Team Tournament Playlist Selection": "\u041a\u043e\u043f\u0438\u044f \u0421\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u044b\u0439 \u043f\u043b\u0435\u0439-\u043b\u0438\u0441\u0442 \u0440\u0435\u0436\u0438\u043c\u0430 \u041a\u043e\u043c\u0430\u043d\u0434\u044b",
  "Team Tournament Playlists": {},
  "Teams Series Length": 7,
- "launchCount": 17,
+ "launchCount": 59,
  "lc14173": 1,
  "lc14292": 1
 }

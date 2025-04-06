@@ -20,6 +20,9 @@ def _access_check_response(self, data) -> None:
         poststr = ''
         _babase.our_ip = addr
         _babase.our_port = port
+        print(
+            f'{Clr.BGRN}{Clr.WHT} Server started {addr}:{port} {Clr.RST}',
+            flush=True)
         if data['accessible']:
             # _fetch_public_servers()
             _babase.queue_chcker_timer = bs.AppTimer(8, babase.Call(
@@ -45,7 +48,8 @@ def _access_check_response(self, data) -> None:
                 f'{Clr.SRED}Master server access check of{addrstr}'
                 f' udp port {port} failed.\n'
                 f'Your server does not appear to be'
-                f' joinable from the internet. Please check your firewall or instance security group.{poststr}{Clr.RST}'
+                f' joinable from the internet. Please check your firewall or instance security group.{
+                    poststr}{Clr.RST}'
             )
 
 
@@ -106,7 +110,7 @@ def on_update_response(response):
         bs.set_public_party_queue_enabled(True)
         return
     if not allowed_to_join and len(
-        players_in_queue) > 1 and current_players < max_allowed_in_server:
+            players_in_queue) > 1 and current_players < max_allowed_in_server:
         #  something is wrong , lets disable queue for some time
         bs.set_public_party_queue_enabled(False)
 

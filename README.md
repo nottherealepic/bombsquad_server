@@ -11,16 +11,16 @@ Migrated from API 7 TO API 8 , this might be unstable and missing some features.
 - Basic knowledge of Linux
 - A VPS (e.g. [Amazon Web Services](https://aws.amazon.com/), [Microsoft Azure](https://portal.azure.com/))
 - Any Linux distribution.
-  - It is recommended to use Ubuntu.
-- Python 3.10
+  - It is recommended to use Ubuntu (minimum Ubuntu 22).
+- Python 3.12
 - 1 GB free Memory (Recommended 2 GB)
 
 ## Getting Started
 This assumes you are on Ubuntu or an Ubuntu based distribution.
 
-Update and install `software-properties-common`
+Install `software-properties-common`
 ```
-sudo apt update; sudo apt install software-properties-common -y
+sudo apt install software-properties-common -y
 ```
 Add python Deadsnakes PPA
 ```
@@ -29,6 +29,10 @@ sudo add-apt-repository ppa:deadsnakes/ppa
 Install Python 3.12
 ```
 sudo apt install python3-pip python3.12-dev python3.12-venv
+```
+Update installed and existing packages
+```
+sudo apt update && sudo apt upgrade
 ```
 Create a tmux session.
 ```
@@ -44,6 +48,7 @@ Making the server files executable.
 ```
 chmod 777 bombsquad_server
 chmod 777 dist/bombsquad_headless
+chmod 777 dist/bombsquad_headless_aarch64
 ```
 Starting the server
 ```
