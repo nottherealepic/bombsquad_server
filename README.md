@@ -1,9 +1,9 @@
 # Bombsquad-Ballistica-Modded-Server
 
-Modded server scripts to host ballistica (Bombsquad) server. Running on BS1.7.37
+Modded server scripts to host ballistica (BombSquad) server. Running on BS1.7.39 (API 9)
 
 ``
-Migrated from API 7 TO API 8 , this might be unstable and missing some features. Use API 7 from this tag
+Migrated from API 7 TO API 9 , this might be unstable and missing some features. Use API 7 from this tag
 ``
 [API7 ](https://github.com/imayushsaini/Bombsquad-Ballistica-Modded-Server/releases/tag/1.7.26)
 
@@ -90,7 +90,7 @@ Here you can ban players, mute them, or disable their kick votes.
 - Allow server owners to join even when server is full by looking owner IP address which was used earlier(don't join by queue).
 - Auto kick fake accounts (unsigned/not verified by master server).
 - Auto enable/disable public queue when server is full.
-- Auto night mode .
+- Auto night mode.
 - Transparent Kickvote , can see who started kick vote for whom.
 - Kickvote msg to chat/screen , can choose to show kickvote start msg either as screen message or chat message.
 - Players IP Address and Device UUID tracking and banning.

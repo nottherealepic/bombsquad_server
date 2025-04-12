@@ -87,10 +87,7 @@ def _cmd(command_data: bytes) -> None:
 
 
 class ServerController:
-    """Overall controller for the app in server mode.
-
-    Category: **App Classes**
-    """
+    """Overall controller for the app in server mode."""
 
     def __init__(self, config: ServerConfig) -> None:
         self._config = config
@@ -390,7 +387,7 @@ class ServerController:
                 f' ({app.env.engine_build_number})'
                 f' entering server-mode {curtimestr}{Clr.RST}'
             )
-            print(startupmsg)
+            logging.info(startupmsg)
 
         if sessiontype is bascenev1.FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name
