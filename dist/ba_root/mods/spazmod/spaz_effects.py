@@ -128,6 +128,7 @@ class NewPlayerSpaz(PlayerSpaz):
             "splinter": self._add_splinter,
             "rainbow": self._add_rainbow,
             "fairydust": self._add_fairydust,
+            "firespark": self._add_firespark,
             "noeffect": lambda: None,
         }
 
@@ -382,7 +383,15 @@ class NewPlayerSpaz(PlayerSpaz):
             spread=0.1,
             emit_type="fairydust",
         )
-
+        
+    @effect(repeat_interval=0.01)
+    def _add_firespark(self):
+        bs.emitfx(
+            position=self.node.position, 
+            velocity=(0, 0, 0), 
+            count=900, spread=0.7, 
+            chunk_type='spark'
+        )
 
 def apply() -> None:
     bascenev1lib.actor.playerspaz.PlayerSpaz = NewPlayerSpaz
