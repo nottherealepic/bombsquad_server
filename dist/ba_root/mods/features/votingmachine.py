@@ -3,6 +3,7 @@
 import time
 
 import _babase
+import _bascenev1
 
 import bascenev1 as bs
 
@@ -81,11 +82,11 @@ def vote(pb_id, client_id, vote_type):
             except:
                 pass
         elif vote_type == "nv":
-            _babase.chatmessage("/nv")
+            _bascenev1.chatmessage("/nv")
         elif vote_type == "dv":
-            _babase.chatmessage("/dv")
+            _bascenev1.chatmessage("/dv")
         elif vote_type == "sm":
-            _babase.chatmessage("/sm")
+            _bascenev1.chatmessage("/sm")
 
 
 def reset_votes():

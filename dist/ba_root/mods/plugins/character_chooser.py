@@ -1,4 +1,4 @@
-# ba_meta require api 8
+# ba_meta require api 9
 
 '''
 Character Chooser by Mr.Smoothy
@@ -36,7 +36,6 @@ from typing import TYPE_CHECKING
 
 import babase
 import bauiv1 as bui
-from babase._error import print_error
 from babase._language import Lstr
 
 if TYPE_CHECKING:
@@ -248,11 +247,11 @@ def handlemessage(self, msg: Any) -> Any:
 
         # If we've been removed from the lobby, ignore this stuff.
         if self._dead:
-            print_error('chooser got ChangeMessage after dying')
+            print('chooser got ChangeMessage after dying')
             return
 
         if not self._text_node:
-            print_error('got ChangeMessage after nodes died')
+            print('got ChangeMessage after nodes died')
             return
         if msg.what == 'characterchooser':
             self._click_sound.play()
