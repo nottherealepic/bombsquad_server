@@ -381,7 +381,19 @@ def on_player_request(func) -> bool:
 
 Session.on_player_request = on_player_request(Session.on_player_request)
 
-ServerController._access_check_response = servercontroller._access_check_response
+
+def on_access_check_response(self, data):
+    if data is not None:
+        addr = data['address']
+        port = data['port']
+        if settings["ballistica_web"]["enable"]:
+            bs.set_public_party_stats_url(
+                f'https://bombsquad-community.web.app/server-manager/?host={addr}&port={port}')
+
+    servercontroller._access_check_response(self, data)
+
+
+ServerController._access_check_response = on_access_check_response
 
 
 def wrap_player_spaz_init(original_class):

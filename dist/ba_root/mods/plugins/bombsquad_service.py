@@ -16,6 +16,7 @@ from typing import Type
 import babase
 import bascenev1 as bs
 from tools import servercheck, logger, notification_manager
+from tools.file_handle import OpenJson
 
 stats = {}
 leaderboard = {}
@@ -29,7 +30,7 @@ class BsDataThread(object):
         global stats
         stats["name"] = _babase.app.classic.server._config.party_name
         stats["discord"] = get_server_settings(
-        )["ballistica_web"]["server_password"]
+        )["ballistica_web"]["discord_link"]
         stats["vapidKey"] = notification_manager.get_vapid_keys()["public_key"]
 
         self.refresh_stats_cache_timer = bs.AppTimer(8, babase.Call(
@@ -117,7 +118,7 @@ class BsDataThread(object):
         return data
 
 
-v = bs.AppTimer(5, babase.Call(
+v = bs.AppTimer(8, babase.Call(
     BsDataThread))
 
 
@@ -273,10 +274,10 @@ def get_server_config():
 
 def update_server_config(config):
     current_dir = os.getcwd()
-    file_path = os.path.join(current_dir, '..', 'config.yaml')
+    file_path = os.path.join(current_dir, '..', 'config.json')
 
-    with open(file_path, "w") as f:
-        f.write(yaml.dump(config))
+    with OpenJson(file_path) as f:
+        f.dump(config, indent=4)
 
 
 def do_action(action, value):
