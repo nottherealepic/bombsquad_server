@@ -100,7 +100,7 @@ class BsDataThread(object):
             teams = session.sessionteams
             for team in teams:
                 data[str(team.id)] = {'name': team.name if isinstance(team.name,
-                                                                      str) else team.name,
+                                                                      str) else team.name.evaluate(),
                                       'color': list(team.color),
                                       'score': team.customdata['score'],
                                       'players': []
