@@ -62,6 +62,10 @@
        "81": {
               "log": "api 9 , latest changes for 1.7.37 from master",
               "time": "09 Feb 2025"
+       },
+       "82": {
+              "log": "api 9 , latest changes for 1.7.41 from master, prevent server crash attack by invalid cjson",
+              "time": "26 May 2025"
        }
 
 }

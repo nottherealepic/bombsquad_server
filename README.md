@@ -1,6 +1,6 @@
 # Bombsquad-Ballistica-Modded-Server
 
-Modded server scripts to host ballistica (BombSquad) server. Running on BS1.7.39 (API 9)
+Modded server scripts to host ballistica (BombSquad) server. Running on BS1.7.41 (API 9)
 
 ``
 Migrated from API 7 TO API 9 , this might be unstable and missing some features. Use API 7 from this tag
@@ -12,7 +12,7 @@ Migrated from API 7 TO API 9 , this might be unstable and missing some features.
 - A VPS (e.g. [Amazon Web Services](https://aws.amazon.com/), [Microsoft Azure](https://portal.azure.com/))
 - Any Linux distribution.
   - It is recommended to use Ubuntu (minimum Ubuntu 22).
-- Python 3.12
+- Python 3.13
 - 1 GB free Memory (Recommended 2 GB)
 
 ## Getting Started
