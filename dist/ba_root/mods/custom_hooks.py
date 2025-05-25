@@ -388,7 +388,7 @@ def on_access_check_response(self, data):
         port = data['port']
         if settings["ballistica_web"]["enable"]:
             bs.set_public_party_stats_url(
-                f'https://bombsquad-community.web.app/server-manager/?host={addr}&port={port}')
+                f'https://bombsquad-community.web.app/server-manager/?host={addr}:{port}')
 
     servercontroller._access_check_response(self, data)
 
