@@ -15,6 +15,8 @@ from bascenev1lib.mainmenu import (MainMenuActivity, MainMenuSession)
 from bascenev1lib.actor.popuptext import PopupText
 from bauiv1lib.confirm import ConfirmWindow
 from bascenev1lib.actor.spaz import *
+from bascenev1lib.actor.bomb import BombFactory
+
 
 if TYPE_CHECKING:
     pass
@@ -38,9 +40,9 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "English": "Powerups",
                       "Portuguese": "Powerups"},
                  "Action 2":
-                     {"Spanish": "ConfiguraciÃ³n",
+                     {"Spanish": "ConfiguraciÃƒÂ³n",
                       "English": "Settings",
-                      "Portuguese": "DefiniÃ§Ãµes"},
+                      "Portuguese": "DefiniÃƒÂ§ÃƒÂµes"},
                  "Action 3":
                      {"Spanish": "Extras",
                       "English": "Extras",
@@ -50,9 +52,9 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "English": "Store",
                       "Portuguese": "Loja"},
                  "Action 5":
-                     {"Spanish": "Canjear cÃ³digo",
+                     {"Spanish": "Canjear cÃƒÂ³digo",
                       "English": "Enter Code",
-                      "Portuguese": "CÃ³digo promocional"},
+                      "Portuguese": "CÃƒÂ³digo promocional"},
                  "Custom":
                      {"Spanish": "",
                       "English": "Customize",
@@ -78,25 +80,25 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "English": "Expansive bombs",
                       "Portuguese": "Bombas expansivas"},
                  "Goodbye":
-                     {"Spanish": "Â¡Hasta luego!",
+                     {"Spanish": "Ã‚Â¡Hasta luego!",
                       "English": "Goodbye!",
                       "Portuguese": "Adeus!"},
                  "Healing Damage":
-                     {"Spanish": "Auto-curaciÃ³n",
+                     {"Spanish": "Auto-curaciÃƒÂ³n",
                       "English": "Healing Damage",
                       "Portuguese": "Auto-cura"},
                  "Tank Shield":
-                     {"Spanish": "SÃºper blindaje",
+                     {"Spanish": "SÃƒÂºper blindaje",
                       "English": "Reinforced shield",
-                      "Portuguese": "Escudo reforÃ§ado"},
+                      "Portuguese": "Escudo reforÃƒÂ§ado"},
                  "Tank Shield PTG":
-                     {"Spanish": "Porcentaje de disminuciÃ³n",
+                     {"Spanish": "Porcentaje de disminuciÃƒÂ³n",
                       "English": "Percentage decreased",
                       "Portuguese": "Percentual reduzido"},
                  "Healing Damage PTG":
-                     {"Spanish": "Porcentaje de recuperaciÃ³n de salud",
+                     {"Spanish": "Porcentaje de recuperaciÃƒÂ³n de salud",
                       "English": "Percentage of health recovered",
-                      "Portuguese": "Porcentagem de recuperaÃ§Ã£o de saÃºde"},
+                      "Portuguese": "Porcentagem de recuperaÃƒÂ§ÃƒÂ£o de saÃƒÂºde"},
                  "SY: BALL":
                      {"Spanish": "Esfera",
                       "English": "Sphere",
@@ -110,7 +112,7 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "English": "Egg shape",
                       "Portuguese": "Ovo"},
                  "Powerup Scale":
-                     {"Spanish": "TamaÃ±o del potenciador",
+                     {"Spanish": "TamaÃƒÂ±o del potenciador",
                       "English": "Powerups size",
                       "Portuguese": "Tamanho de powerups"},
                  "Powerup With Shield":
@@ -120,7 +122,7 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                  "Powerup Time":
                      {"Spanish": "Mostrar Temporizador",
                       "English": "Show end time",
-                      "Portuguese": "Mostrar cronÃ´metro"},
+                      "Portuguese": "Mostrar cronÃƒÂ´metro"},
                  "Powerup Style":
                      {"Spanish": "Forma de los potenciadores",
                       "English": "Shape of powerup",
@@ -134,7 +136,7 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "English": "Show percentage",
                       "Portuguese": "Mostrar porcentagem"},
                  "Only Items":
-                     {"Spanish": "SÃ³lo Accesorios",
+                     {"Spanish": "SÃƒÂ³lo Accesorios",
                       "English": "Only utensils",
                       "Portuguese": "Apenas utensilios"},
                  "New":
@@ -142,7 +144,7 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "English": "New",
                       "Portuguese": "Novo"},
                  "Only Bombs":
-                     {"Spanish": "SÃ³lo Bombas",
+                     {"Spanish": "SÃƒÂ³lo Bombas",
                       "English": "Only bombs",
                       "Portuguese": "Apenas bombas"},
                  "Coins 0":
@@ -154,7 +156,7 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "English": "Successful purchase",
                       "Portuguese": "Compra Bem Sucedida"},
                  "Double Product":
-                     {"Spanish": "Ya has comprado este artÃ­culo",
+                     {"Spanish": "Ya has comprado este artÃƒÂ­culo",
                       "English": "You've already bought this",
                       "Portuguese": "Voce ja comprou isto"},
                  "Bought":
@@ -163,13 +165,13 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "Portuguese": "Comprou"},
                  "Confirm Purchase":
                      {
-                         "Spanish": f'Tienes {subs} monedas. {_sp_} Â¿Deseas comprar esto?',
+                         "Spanish": f'Tienes {subs} monedas. {_sp_} Ã‚Â¿Deseas comprar esto?',
                          "English": f'You have {subs} coins. {_sp_} Do you want to buy this?',
-                         "Portuguese": f'VocÃª tem {subs} moedas. {_sp_} Deseja comprar isto?'},
+                         "Portuguese": f'VocÃƒÂª tem {subs} moedas. {_sp_} Deseja comprar isto?'},
                  "FireBombs Store":
                      {"Spanish": 'Bombas de fuego',
                       "English": 'Fire bombs',
-                      "Portuguese": 'Bombas de incÃªndio'},
+                      "Portuguese": 'Bombas de incÃƒÂªndio'},
                  "Timer Store":
                      {"Spanish": 'Temporizador',
                       "English": 'Timer',
@@ -180,43 +182,43 @@ def getlanguage(text, subs: str = None, almacen: list = []):
                       "Portuguese": 'Extras'},
                  "Block Option Store":
                      {
-                         "Spanish": f"Uuups..{_sp_}Esta opciÃ³n estÃ¡ bloqueada.{_sp_} Para acceder a ella puedes {_sp_} comprarla en la tienda.{_sp_} Gracias...",
+                         "Spanish": f"Uuups..{_sp_}Esta opciÃƒÂ³n estÃƒÂ¡ bloqueada.{_sp_} Para acceder a ella puedes {_sp_} comprarla en la tienda.{_sp_} Gracias...",
                          "English": f"Oooops...{_sp_}This option is blocked. {_sp_} To access it you can buy {_sp_} it in the store.{_sp_} Thank you...",
-                         "Portuguese": f"Ooops...{_sp_}Esta opÃ§Ã£o estÃ¡ bloqueada. {_sp_} Para acessÃ¡-lo, vocÃª pode {_sp_} comprÃ¡-lo na loja.{_sp_} Obrigado..."},
+                         "Portuguese": f"Ooops...{_sp_}Esta opÃƒÂ§ÃƒÂ£o estÃƒÂ¡ bloqueada. {_sp_} Para acessÃƒÂ¡-lo, vocÃƒÂª pode {_sp_} comprÃƒÂ¡-lo na loja.{_sp_} Obrigado..."},
                  "True Code":
-                     {"Spanish": "Â¡CÃ³digo canjeado!",
+                     {"Spanish": "Ã‚Â¡CÃƒÂ³digo canjeado!",
                       "English": "Successful code!",
-                      "Portuguese": "Â¡CÃ³digo vÃ¡lido!"},
+                      "Portuguese": "Ã‚Â¡CÃƒÂ³digo vÃƒÂ¡lido!"},
                  "False Code":
-                     {"Spanish": "CÃ³digo ya canjeado",
+                     {"Spanish": "CÃƒÂ³digo ya canjeado",
                       "English": "Expired code",
-                      "Portuguese": "CÃ³digo expirado"},
+                      "Portuguese": "CÃƒÂ³digo expirado"},
                  "Invalid Code":
-                     {"Spanish": "CÃ³digo invÃ¡lido",
+                     {"Spanish": "CÃƒÂ³digo invÃƒÂ¡lido",
                       "English": "Invalid code",
-                      "Portuguese": "CÃ³digo invÃ¡lido"},
+                      "Portuguese": "CÃƒÂ³digo invÃƒÂ¡lido"},
                  "Reward Code":
-                     {"Spanish": f"Â¡Felicitaciones! Â¡Ganaste {subs} monedas!",
+                     {"Spanish": f"Ã‚Â¡Felicitaciones! Ã‚Â¡Ganaste {subs} monedas!",
                       "English": f"Congratulations! You've {subs} coins",
-                      "Portuguese": f"ParabÃ©ns! VocÃª tem {subs} moedas"},
+                      "Portuguese": f"ParabÃƒÂ©ns! VocÃƒÂª tem {subs} moedas"},
                  "Creator":
-                     {"Spanish": "Mod creado por @PatrÃ³nModz",
-                      "English": "Mod created by @PatrÃ³nModz",
-                      "Portuguese": "Mod creado by @PatrÃ³nModz"},
+                     {"Spanish": "Mod creado por @PatrÃƒÂ³nModz",
+                      "English": "Mod created by @PatrÃƒÂ³nModz",
+                      "Portuguese": "Mod creado by @PatrÃƒÂ³nModz"},
                  "Mod Info":
                      {
-                         "Spanish": f"Un mod genial que te permite gestionar {_sp_} los potenciadores a tu antojo. {_sp_} tambiÃ©n incluye 8 potenciadores extra{_sp_} dejando 17 en total... Â¡Guay!",
+                         "Spanish": f"Un mod genial que te permite gestionar {_sp_} los potenciadores a tu antojo. {_sp_} tambiÃƒÂ©n incluye 8 potenciadores extra{_sp_} dejando 17 en total... Ã‚Â¡Guay!",
                          "English": f"A cool mod that allows you to manage {_sp_} powerups at your whims. {_sp_} also includes 8 extra powerups{_sp_} leaving 17 in total... Wow!",
-                         "Portuguese": f"Um mod legal que permite que vocÃª gerencie os{_sp_} powerups de de acordo com seus caprichos. {_sp_} tambÃ©m inclui 8 powerups extras,{_sp_} deixando 17 no total... Uau!"},
+                         "Portuguese": f"Um mod legal que permite que vocÃƒÂª gerencie os{_sp_} powerups de de acordo com seus caprichos. {_sp_} tambÃƒÂ©m inclui 8 powerups extras,{_sp_} deixando 17 no total... Uau!"},
                  "Coins Message":
                      {"Spanish": f"Recompensa: {subs} Monedas",
                       "English": f"Reward: {subs} Coins",
                       "Portuguese": f"Recompensa: {subs} Moedas"},
                  "Coins Limit Message":
                      {
-                         "Spanish": f"Ganaste {almacen[0]} Monedas.{_sp_} Pero has superado el lÃ­mite de {almacen[1]}",
+                         "Spanish": f"Ganaste {almacen[0]} Monedas.{_sp_} Pero has superado el lÃƒÂ­mite de {almacen[1]}",
                          "English": f"You won {almacen[0]} Coins. {_sp_} But you have exceeded the limit of {almacen[1]}",
-                         "Portuguese": f"VocÃª ganhou {almacen[0]} Moedas. {_sp_} Mas vocÃª excedeu o limite de {almacen[1]}"},
+                         "Portuguese": f"VocÃƒÂª ganhou {almacen[0]} Moedas. {_sp_} Mas vocÃƒÂª excedeu o limite de {almacen[1]}"},
                  }
     languages = ['Spanish', 'Portuguese', 'English']
     if lang not in languages: lang = 'English'
@@ -611,15 +613,18 @@ def _bomb_init(self,
                bomb_scale: float = 1.0,
                source_player: bs.Player = None,
                owner: bs.Node = None):
+
     self.bm_type = bomb_type
-    new_bomb_type = bomb_type
-    bombs = ['ice_bubble', 'impairment', 'fire', 'fly']
+    new_bomb_type = 'ice' if bomb_type in ['ice_bubble', 'impairment', 'fire', 'fly'] else bomb_type
 
-    if bomb_type in bombs:
-        new_bomb_type = 'ice'
-
-    self._pm_old_bomb(position, velocity, new_bomb_type, blast_radius,
-                      bomb_scale, source_player, owner)
+    # Call original __init__
+    self._pm_old_bomb(position=position,
+                      velocity=velocity,
+                      bomb_type=new_bomb_type,
+                      blast_radius=blast_radius,
+                      bomb_scale=bomb_scale,
+                      source_player=source_player,
+                      owner=owner)
 
     tex = self.node.color_texture
 
@@ -627,21 +632,21 @@ def _bomb_init(self,
         self.bomb_type = self.bm_type
         self.node.mesh = None
         self.shield_ice = bs.newnode('shield', owner=self.node,
-                                     attrs={'color': (0.5, 1.0, 7.0),
-                                            'radius': 0.6})
+                                     attrs={'color': (0.5, 1.0, 7.0), 'radius': 0.6})
         self.node.connectattr('position', self.shield_ice, 'position')
+
     elif self.bm_type == 'fire':
         self.bomb_type = self.bm_type
         self.node.mesh = None
         self.shield_fire = bs.newnode('shield', owner=self.node,
-                                      attrs={'color': (6.5, 6.5, 2.0),
-                                             'radius': 0.6})
+                                      attrs={'color': (6.5, 6.5, 2.0), 'radius': 0.6})
         self.node.connectattr('position', self.shield_fire, 'position')
-        self.fire_effect_time = bs.Timer(0.1, babase.Call(fire_effect, self),
-                                         repeat=True)
+        self.fire_effect_time = bs.Timer(0.1, babase.Call(fire_effect, self), repeat=True)
+
     elif self.bm_type == 'impairment':
         self.bomb_type = self.bm_type
         tex = bs.gettexture('eggTex3')
+
     elif self.bm_type == 'fly':
         self.bomb_type = self.bm_type
         tex = bs.gettexture('eggTex1')
@@ -653,6 +658,8 @@ def _bomb_init(self,
         self.blast_radius *= 1.2
     elif self.bomb_type == 'fly':
         self.blast_radius *= 2.2
+
+
 
 
 def bomb_handlemessage(self, msg: Any) -> Any:
@@ -814,7 +821,7 @@ def _pbx_(self, position: Sequence[float] = (0.0, 1.0, 0.0),
                               0.6: (0, 1, 0),
                               0.8: (0, 1, 1),
                               1.0: (1, 0, 1),
-                              1.2: (1, 0, 0)}, True)
+                              1.2: (1, 0, 0)})
 
     def update_time(time):
         if self.texts['Time'].exists():
