@@ -1,9 +1,9 @@
 # Bombsquad-Ballistica-Modded-Server
 
-Modded server scripts to host ballistica (Bombsquad) server. Running on BS1.7.37
+Modded server scripts to host ballistica (BombSquad) server. Running on BS1.7.41 (API 9)
 
 ``
-Migrated from API 7 TO API 8 , this might be unstable and missing some features. Use API 7 from this tag
+Migrated from API 7 TO API 9 , this might be unstable and missing some features. Use API 7 from this tag
 ``
 [API7 ](https://github.com/imayushsaini/Bombsquad-Ballistica-Modded-Server/releases/tag/1.7.26)
 
@@ -11,16 +11,16 @@ Migrated from API 7 TO API 8 , this might be unstable and missing some features.
 - Basic knowledge of Linux
 - A VPS (e.g. [Amazon Web Services](https://aws.amazon.com/), [Microsoft Azure](https://portal.azure.com/))
 - Any Linux distribution.
-  - It is recommended to use Ubuntu.
-- Python 3.10
+  - It is recommended to use Ubuntu (minimum Ubuntu 22).
+- Python 3.13
 - 1 GB free Memory (Recommended 2 GB)
 
 ## Getting Started
 This assumes you are on Ubuntu or an Ubuntu based distribution.
 
-Update and install `software-properties-common`
+Install `software-properties-common`
 ```
-sudo apt update; sudo apt install software-properties-common -y
+sudo apt install software-properties-common -y
 ```
 Add python Deadsnakes PPA
 ```
@@ -30,13 +30,17 @@ Install Python 3.12
 ```
 sudo apt install python3-pip python3.12-dev python3.12-venv
 ```
+Update installed and existing packages
+```
+sudo apt update && sudo apt upgrade
+```
 Create a tmux session.
 ```
 tmux new -s 43210
 ```
 Download server files.
 ```
-git clone https://github.com/imayushsaini/Bombsquad-Ballistica-Modded-Server
+git clone --depth=1 https://github.com/imayushsaini/Bombsquad-Ballistica-Modded-Server
 cd Bombsquad-Ballistica-Modded-Server
 ```
 Now edit config.yaml in root dir change server name, port, admins, playlist, team name etc..
@@ -44,6 +48,7 @@ Making the server files executable.
 ```
 chmod 777 bombsquad_server
 chmod 777 dist/bombsquad_headless
+chmod 777 dist/bombsquad_headless_aarch64
 ```
 Starting the server
 ```
@@ -85,7 +90,7 @@ Here you can ban players, mute them, or disable their kick votes.
 - Allow server owners to join even when server is full by looking owner IP address which was used earlier(don't join by queue).
 - Auto kick fake accounts (unsigned/not verified by master server).
 - Auto enable/disable public queue when server is full.
-- Auto night mode .
+- Auto night mode.
 - Transparent Kickvote , can see who started kick vote for whom.
 - Kickvote msg to chat/screen , can choose to show kickvote start msg either as screen message or chat message.
 - Players IP Address and Device UUID tracking and banning.

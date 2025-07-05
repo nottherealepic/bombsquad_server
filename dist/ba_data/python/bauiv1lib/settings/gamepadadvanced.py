@@ -40,7 +40,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                 size=(self._width, self._height),
                 scale=1.06
                 * (
-                    1.85
+                    1.6
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
@@ -99,7 +99,6 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             ),
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         self._subcontainer = bui.containerwidget(
@@ -107,7 +106,6 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         bui.containerwidget(
@@ -473,6 +471,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
         name: bui.Lstr,
         control: str,
         position: tuple[float, float],
+        *,
         min_val: float = 0.0,
         max_val: float = 100.0,
         increment: float = 1.0,

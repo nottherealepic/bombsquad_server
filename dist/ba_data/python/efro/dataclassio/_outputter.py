@@ -19,8 +19,9 @@ from typing import TYPE_CHECKING, cast, Any
 from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
-    _parse_annotated,
+    parse_annotated,
     EXTRA_ATTRS_ATTR,
+    LOSSY_ATTR,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -40,6 +41,7 @@ class _Outputter:
     def __init__(
         self,
         obj: Any,
+        *,
         create: bool,
         codec: Codec,
         coerce_to_float: bool,
@@ -59,6 +61,14 @@ class _Outputter:
         # mypy workaround - if we check 'obj' here it assumes the
         # isinstance call below fails.
         assert dataclasses.is_dataclass(self._obj)
+
+        # If this data has been flagged as lossy, don't allow outputting
+        # it. This hopefully helps avoid unintentional data
+        # modification/loss.
+        if getattr(obj, LOSSY_ATTR, False):
+            raise ValueError(
+                'Object has been flagged as lossy; output is disallowed.'
+            )
 
         # For special extended data types, call their 'will_output' callback.
         # FIXME - should probably move this into _process_dataclass so it
@@ -99,7 +109,7 @@ class _Outputter:
             anntype = prep.annotations[fieldname]
             value = getattr(obj, fieldname)
 
-            anntype, ioattrs = _parse_annotated(anntype)
+            anntype, ioattrs = parse_annotated(anntype)
 
             # If we're not storing default values for this fella,
             # we can skip all output processing if we've got a default value.
@@ -192,6 +202,7 @@ class _Outputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -295,7 +306,11 @@ class _Outputter:
             childanntype = childanntypes[0]
 
             # If that type is a multi-type, we determine our type per-object.
-            if issubclass(childanntype, IOMultiType):
+            # Make sure we only pass actual types to issubclass; it will error
+            # if we give it something like typing.Any.
+            if isinstance(childanntype, type) and issubclass(
+                childanntype, IOMultiType
+            ):
                 # In the multi-type case, we use each object's own type
                 # to do its conversion, but lets at least make sure each
                 # of those types inherits from the annotated multi-type
@@ -393,7 +408,8 @@ class _Outputter:
                     ),
                     key=(
                         None
-                        if childanntypes[0] in [str, int, float, bool]
+                        if childanntypes[0]
+                        in [str, int, float, bool, datetime.datetime]
                         else lambda v: json.dumps(v, sort_keys=True)
                     ),
                 )
@@ -511,6 +527,7 @@ class _Outputter:
         value: dict,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
         if not isinstance(value, dict):
             raise TypeError(

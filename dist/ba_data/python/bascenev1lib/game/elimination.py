@@ -2,7 +2,7 @@
 #
 """Elimination mini-game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
@@ -27,6 +27,7 @@ class Icon(bs.Actor):
         player: Player,
         position: tuple[float, float],
         scale: float,
+        *,
         show_lives: bool = True,
         show_death: bool = True,
         name_scale: float = 1.0,
@@ -251,6 +252,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('melee')
 
@@ -276,6 +278,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         return (
             'Last team standing wins.'
             if isinstance(self.session, bs.DualTeamSession)
@@ -284,6 +287,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         return (
             'last team standing wins'
             if isinstance(self.session, bs.DualTeamSession)
@@ -292,6 +296,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_player_join(self, player: Player) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         player.lives = self._lives_per_player
 
         if self._solo_mode:
@@ -484,6 +489,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        """Spawn a player (override)."""
         actor = self.spawn_player_spaz(player, self._get_spawn_point(player))
         if not self._solo_mode:
             bs.timer(0.3, bs.Call(self._print_lives, player))
@@ -511,6 +517,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_player_leave(self, player: Player) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         super().on_player_leave(player)
         player.icons = []
 
@@ -606,6 +613,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        """End the game."""
         if self.has_ended():
             return
         results = bs.GameResults()

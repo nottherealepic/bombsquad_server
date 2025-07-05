@@ -1,17 +1,12 @@
 {
+    "customtag": {
+        "pb-id": "smoothy",
+        "pb-45": "something",
+        "pb-IF4TVWwZUQ==": "proowner"
+    },
     "customeffects": {
         "pb-IF4TVWwZUQ==": [
             "spark"
-        ],
-        "pb-smoothy-effect": [
-            "spark"
-        ],
-        "pb-testingroles": [
-            "highlightshine"
         ]
-    },
-    "customtag": {
-        "pb-id5y54y54": "smoothy",
-        "pb-smoothybro": "they smoothy"
     }
 }

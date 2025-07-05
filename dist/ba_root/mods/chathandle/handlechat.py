@@ -17,6 +17,7 @@ settings = setting.get_settings_data()
 
 def filter_chat_message(msg, client_id):
     now = datetime.now()
+    # bypassing chat filter for host
     if client_id == -1:
         if msg.startswith("/"):
             command_executor.execute(msg, client_id)
@@ -37,6 +38,11 @@ def filter_chat_message(msg, client_id):
             displaystring = i['display_string']
     if acid:
         msg = chatfilter.filter(msg, acid, client_id)
+    else:
+        bs.broadcastmessage("Fetching your account info , please wait",
+                            transient=True, clients=[client_id])
+        return
+
     if msg == None:
         return
     logger.log(f'{acid}  |  {displaystring}| {currentname} | {msg}', "chat")
@@ -56,16 +62,16 @@ def filter_chat_message(msg, client_id):
             return
 
         elif acid in pdata.get_blacklist()[
-            "muted-ids"] and now < datetime.strptime(
-            pdata.get_blacklist()["muted-ids"][acid]["till"],
-            "%Y-%m-%d %H:%M:%S"):
+                "muted-ids"] and now < datetime.strptime(
+                pdata.get_blacklist()["muted-ids"][acid]["till"],
+                "%Y-%m-%d %H:%M:%S"):
             bs.broadcastmessage(
                 "You are on mute, maybe try after some time", transient=True,
                 clients=[client_id])
             return None
         elif servercheck.get_account_age(
-            serverdata.clients[acid]["accountAge"]) < settings[
-            'minAgeToChatInHours']:
+                serverdata.clients[acid]["accountAge"]) < settings[
+                'minAgeToChatInHours']:
             bs.broadcastmessage("New accounts not allowed to chat here",
                                 transient=True, clients=[client_id])
             return None

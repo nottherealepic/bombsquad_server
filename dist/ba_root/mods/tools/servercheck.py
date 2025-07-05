@@ -48,7 +48,7 @@ class checkserver(object):
             else:
                 deviceClientMap[device_id].append(ros["client_id"])
                 if len(deviceClientMap[device_id]) >= settings[
-                    'maxAccountPerIP']:
+                        'maxAccountPerIP']:
                     bs.chatmessage(
                         f"Only {settings['maxAccountPerIP']} player per IP allowed, disconnecting this device.",
                         clients=[
@@ -74,7 +74,7 @@ class checkserver(object):
                     continue
             newPlayers.append(ros['account_id'])
             if ros['account_id'] not in self.players and ros[
-                'client_id'] != -1:
+                    'client_id'] != -1:
                 # new player joined lobby
 
                 d_str = ros['display_string']
@@ -103,8 +103,8 @@ class checkserver(object):
                 if settings["whitelist"] and ros["account_id"] is not None:
                     if ros["account_id"] not in pdata.CacheData.whitelist:
                         bs.broadcastmessage("Not in whitelist,contact admin",
-                                             color=(1, 0, 0), transient=True,
-                                             clients=[ros['client_id']])
+                                            color=(1, 0, 0), transient=True,
+                                            clients=[ros['client_id']])
                         logger.log(
                             f'{d_str}  || {ros["account_id"]} | kicked > not in whitelist')
                         bs.disconnect_client(ros['client_id'])
@@ -141,9 +141,9 @@ def on_player_join_server(pbid, player_data, ip, device_id):
             joincount += 1
             if joincount > 2:
                 bs.broadcastmessage("Joining too fast , slow down dude",
-                                     # its not possible now tho, network layer will catch it before reaching here
-                                     color=(1, 0, 1), transient=True,
-                                     clients=[clid])
+                                    # its not possible now tho, network layer will catch it before reaching here
+                                    color=(1, 0, 1), transient=True,
+                                    clients=[clid])
                 logger.log(f'{pbid} || kicked for joining too fast')
                 bs.disconnect_client(clid)
                 _thread.start_new_thread(reportSpam, (pbid,))
@@ -160,7 +160,7 @@ def on_player_join_server(pbid, player_data, ip, device_id):
 
     if player_data is not None:  # player data is in serevrdata or in local.json cache
         serverdata.recents.append(
-            {"client_id": clid, "deviceId": device_string, "pbid": pbid})
+            {"client_id": clid, "deviceId": device_string, "pbid": pbid, "ip": ip, "device_uuid": device_id})
         serverdata.recents = serverdata.recents[-20:]
         if check_ban(ip, device_id, pbid):
             _babase.chatmessage(
@@ -169,7 +169,7 @@ def on_player_join_server(pbid, player_data, ip, device_id):
             bs.disconnect_client(clid)
             return
         if get_account_age(player_data["accountAge"]) < \
-            settings["minAgeToJoinInHours"]:
+                settings["minAgeToJoinInHours"]:
             for ros in bs.get_game_roster():
                 if ros['account_id'] == pbid:
                     bs.broadcastmessage(
@@ -191,9 +191,9 @@ def on_player_join_server(pbid, player_data, ip, device_id):
                 serverdata.clients[pbid]["rejoincount"] = 1
                 serverdata.clients[pbid]["lastJoin"] = time.time()
                 if pbid in blacklist[
-                    "kick-vote-disabled"] and current_time < datetime.strptime(
-                    blacklist["kick-vote-disabled"][pbid]["till"],
-                    "%Y-%m-%d %H:%M:%S"):
+                        "kick-vote-disabled"] and current_time < datetime.strptime(
+                        blacklist["kick-vote-disabled"][pbid]["till"],
+                        "%Y-%m-%d %H:%M:%S"):
                     _babase.disable_kickvote(pbid)
 
             serverdata.clients[pbid]["lastIP"] = ip
@@ -235,15 +235,15 @@ def check_ban(ip, device_id, pbid, log=True):
     current_time = datetime.now()
 
     if ip in blacklist["ban"]['ips'] and current_time < datetime.strptime(
-        blacklist["ban"]["ips"][ip]["till"], "%Y-%m-%d %H:%M:%S"):
+            blacklist["ban"]["ips"][ip]["till"], "%Y-%m-%d %H:%M:%S"):
         msg = f' reason: matched IP | {blacklist["ban"]["ips"][ip]["reason"]} , Till : {blacklist["ban"]["ips"][ip]["till"]}'
         if log:
             logger.log(f'{pbid} | kicked > {msg}')
             return True
         return msg
     elif device_id in blacklist["ban"][
-        "deviceids"] and current_time < datetime.strptime(
-        blacklist["ban"]["deviceids"][device_id]["till"], "%Y-%m-%d %H:%M:%S"):
+            "deviceids"] and current_time < datetime.strptime(
+            blacklist["ban"]["deviceids"][device_id]["till"], "%Y-%m-%d %H:%M:%S"):
         msg = f'reason: matched deviceId | {blacklist["ban"]["deviceids"][device_id]["reason"]}, Till : {blacklist["ban"]["deviceids"][device_id]["till"]}'
         if log:
             logger.log(
@@ -251,7 +251,7 @@ def check_ban(ip, device_id, pbid, log=True):
             return True
         return msg
     elif pbid in blacklist["ban"]["ids"] and current_time < datetime.strptime(
-        blacklist["ban"]["ids"][pbid]["till"], "%Y-%m-%d %H:%M:%S"):
+            blacklist["ban"]["ids"][pbid]["till"], "%Y-%m-%d %H:%M:%S"):
         msg = f'reason: matched ID | {blacklist["ban"]["ids"][pbid]["reason"]} , Till : {blacklist["ban"]["ids"][pbid]["till"]}'
         if log:
             logger.log(
@@ -401,7 +401,7 @@ def kick_by_pb_id(pb_id, msg):
     for ros in bs.get_game_roster():
         if ros['account_id'] == pb_id:
             bs.broadcastmessage(msg, transient=True,
-                                 clients=[ros['client_id']])
+                                clients=[ros['client_id']])
             bs.disconnect_client(ros['client_id'])
 
 

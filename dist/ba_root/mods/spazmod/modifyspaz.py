@@ -40,7 +40,7 @@ def main(spaz, node, player):
         spaz.equip_boxing_gloves()
     if _setting['playermod']['default_shield']:
         spaz.equip_shields()
-    spaz.bomb_type_default = _setting['playermod']['default_bomb']
+    spaz.bomb_type = _setting['playermod']['default_bomb']
     spaz.bomb_count = _setting['playermod']['default_bomb_count']
     # update_name()  will add threading here later . it was adding delay on game start
 
