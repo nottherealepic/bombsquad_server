@@ -40,7 +40,7 @@ tmux new -s 43210
 ```
 Download server files.
 ```
-git clone https://github.com/imayushsaini/Bombsquad-Ballistica-Modded-Server
+git clone --depth=1 https://github.com/imayushsaini/Bombsquad-Ballistica-Modded-Server
 cd Bombsquad-Ballistica-Modded-Server
 ```
 Now edit config.yaml in root dir change server name, port, admins, playlist, team name etc..
