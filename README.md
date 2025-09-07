@@ -26,9 +26,9 @@ Add python Deadsnakes PPA
 ```
 sudo add-apt-repository ppa:deadsnakes/ppa
 ```
-Install Python 3.12
+Install Python 3.13
 ```
-sudo apt install python3-pip python3.12-dev python3.12-venv
+sudo apt install python3.13 python3.13-dev python3.13-venv python3-pip -y
 ```
 Update installed and existing packages
 ```
