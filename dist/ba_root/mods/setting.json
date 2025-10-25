@@ -56,7 +56,7 @@
     "enable": true
   },
   "discordWebHook": {
-    "enable": false,
+    "enable": true,
     "webhookURL": "https://discord.com/api/webhooks/1369436012295491594/Zn4tvMaVqaipebVGJ5C4IR-9zvB-bBaF-SFq2MKbuu3iGGTzNUevFh7gHxBW9UXFSboE"
   },
   "discordbot": {
