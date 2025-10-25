@@ -3,28 +3,27 @@
    "party_is_public":true,
    "authenticate_clients":true,
    "admins":[
-      "pb-yOuRAccOuNtIdHErE",
-      "pb-aNdMayBeAnotherHeRE"
+      "pb-IF4sUGIPEg=="
    ],
    "enable_default_kick_voting":true,
    "port":43210,
-   "max_party_size":6,
-   "session_max_players_override":8,
-   "session_type":"ffa",
-   "playlist_code":12345,
+   "max_party_size":8,
+   "session_max_players_override":10,
+   "session_type":"team",
+   "playlist_code":412160,
    "playlist_shuffle":true,
    "auto_balance_teams":true,
    "enable_telnet":false,
    "teams_series_length":7,
    "ffa_series_length":24,
-   "stats_url":"https://discord.gg/ucyaesh",
+   "stats_url":"https://discord.gg/XZvW4e4VPb",
    "clean_exit_minutes":60,
    "unclean_exit_minutes":90,
    "idle_exit_minutes":20,
    "show_tutorial":false,
    "team_names":[
-      "ladoo",
-      "barfi"
+      "NOT EPIC",
+      "REAL EPIC"
    ],
    "team_colors":[
       [
