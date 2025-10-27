@@ -158,7 +158,7 @@
   "sameCharacterForTeam": false,
   "statsResetAfterDays": 31,
   "textonmap": {
-    "bottom left watermark": "epic",
+    "bottom left watermark": "",
     "center highlights": {
       "color": [
         1,
@@ -173,7 +173,7 @@
       ],
       "randomColor": true
     },
-    "top watermark": "EPIC"
+    "top watermark": ""
   },
   "useV2Account": false,
   "warnMsg": "WARNING !!!",

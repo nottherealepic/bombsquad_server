@@ -1,5 +1,5 @@
 {
-   "party_name":"KERALA SUPER LEAGUE",
+   "party_name":"⚽|KERALA SUPER LEAGUE|⚽",
    "party_is_public":true,
    "authenticate_clients":true,
    "admins":[
@@ -22,8 +22,8 @@
    "idle_exit_minutes":20,
    "show_tutorial":false,
    "team_names":[
-      "KANNUR WARRIORS",
-      "MALAPPURAM FC"
+      "KWFC",
+      "MFC"
    ],
    "team_colors":[
       [
