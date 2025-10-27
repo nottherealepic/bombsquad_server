@@ -7,10 +7,15 @@ from stats import mystats
 import bascenev1 as bs
 from babase._general import Call
 from .handlers import send
+import datetime
+import requests
+import json
+
+WEBHOOK_URL = "https://discord.com/api/webhooks/1432260831504236545/PZI2lC89_ndMfiwbdm-255XFJx30G7GeYpMgVqpWCLGJnS9M8jpPZz-KiKxh0y7ryFmq"
 
 Commands = ['me', 'list', 'uniqeid', 'ping']
 CommandAliases = ['stats', 'score', 'rank',
-                  'myself', 'l', 'id', 'pb-id', 'pb', 'accountid']
+                  'myself', 'l', 'id', 'pb-id', 'pb', 'accountid', 'complain']
 
 
 def ExcelCommand(command, arguments, clientid, accountid):
@@ -37,6 +42,54 @@ def ExcelCommand(command, arguments, clientid, accountid):
 
     elif command in ['ping']:
         get_ping(arguments, clientid)
+        
+    elif command in ['complain', 'report']:
+        send_complaint(arguments, clientid, accountid)
+    
+    
+    
+def send_complaint(arguments, clientid, accountid):
+    """Handles /complain or /report command from players."""
+    message = " ".join(arguments).strip()
+    if not message:
+        send("Usage: /complain <your message>", clientid)
+        return
+
+    # Try to get player name safely
+    try:
+        import _bascenev1
+        session = _bascenev1.get_foreground_host_session()
+        player = session.sessionplayers_by_inputdevice_id[clientid]
+        player_name = player.getname(full=True)
+    except Exception:
+        player_name = f"Player {clientid}"
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Confirm to player in chat
+    send("✅ Complaint submitted! Admins will review it soon.", clientid)
+
+    # Create embed for Discord
+    embed = {
+        "title": "🚨 New Complaint",
+        "color": 16711680,  # red
+        "fields": [
+            {"name": "Player", "value": player_name, "inline": False},
+            {"name": "Account ID", "value": str(accountid), "inline": False},
+            {"name": "Message", "value": message, "inline": False},
+            {"name": "Time", "value": timestamp, "inline": False},
+        ]
+    }
+
+    # Send to Discord webhook
+    payload = {"embeds": [embed]}
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        requests.post(WEBHOOK_URL, headers=headers, data=json.dumps(payload))
+        print(f"[ComplaintBot] Complaint sent by {player_name}")
+    except Exception as e:
+        print(f"[ComplaintBot] Failed to send complaint: {e}")
 
 
 def get_ping(arguments, clientid):
