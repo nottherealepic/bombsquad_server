@@ -869,7 +869,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         _bascenev1.timer(0.5, light.delete)
         return spaz
 
-    def setup_standard_powerup_drops(self, enable_tnt: bool = True) -> None:
+    def setup_standard_powerup_drops(self, enable_tnt: bool = False) -> None:
         """Create standard powerup drops for the current map."""
         # pylint: disable=cyclic-import
         from bascenev1lib.actor.powerupbox import DEFAULT_POWERUP_INTERVAL
@@ -884,7 +884,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             self._tnt_spawners = {}
             self._setup_standard_tnt_drops()
 
-    def _standard_drop_powerup(self, index: int, expire: bool = True) -> None:
+    def _standard_drop_powerup(self, index: int, expire: bool = False) -> None:
         # pylint: disable=cyclic-import
         from bascenev1lib.actor.powerupbox import PowerupBox, PowerupBoxFactory
 

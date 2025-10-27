@@ -4,7 +4,7 @@
     },
     "customeffects": {
         "pb-IF4sUGIPEg==": [
-            "spark"
+            "ice","iceground","sparkground", "sweat","sweatground", "scorch", "glow", "shine", "distortion", "highlightshine", "slime", "metal", "spark", "splinter", "rainbow", "fairydust"
         ]
     }
 }

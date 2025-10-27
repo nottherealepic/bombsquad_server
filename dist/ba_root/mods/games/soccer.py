@@ -108,7 +108,7 @@ class Team(bs.Team[Player]):
 class HockeyGame(bs.TeamGameActivity[Player, Team]):
     """Ice hockey game."""
 
-    name = 'Epic Soccer'
+    name = 'KERALA SUPER LEAGUE'
     description = 'Score some goals.'
     available_settings = [
         bs.IntSetting(
@@ -162,7 +162,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         self._foghorn_sound = bui.getsound('foghorn')
         self._swipsound = bui.getsound('swip')
         self._whistle_sound = bui.getsound('refWhistle')
-        self.puck_model = bs.getmesh('bomb')
+        self.puck_model = bs.getmesh('impactBomb')
         self.puck_tex = bs.gettexture('landMine')
         self.puck_scored_tex = bs.gettexture('landMineLit')
         self._puck_sound = bs.getsound('metalHit')
