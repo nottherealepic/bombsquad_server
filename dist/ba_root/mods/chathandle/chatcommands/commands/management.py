@@ -490,10 +490,17 @@ def change_role_tag(arguments):
 def set_custom_tag(arguments):
     try:
         session = bs.get_foreground_host_session()
+        # Combine all arguments except the last (client id) into the tag text
+        if len(arguments) < 2:
+            return
+        tag = " ".join(arguments[:-1])  # this keeps capitalization
+        target_id = int(arguments[-1])
         for i in session.sessionplayers:
-            if i.inputdevice.client_id == int(arguments[1]):
-                roles = pdata.set_tag(arguments[0], i.get_v1_account_id())
-    except:
+            if i.inputdevice.client_id == target_id:
+                pdata.set_tag(tag, i.get_v1_account_id())
+                break
+    except Exception as e:
+        print(f"[CustomTag] Error: {e}")
         return
 
 

@@ -53,56 +53,112 @@ def addhp(node, spaz):
 
 
 class Tag(object):
-    def __init__(self, owner=None, tag="somthing", col=(1, 1, 1)):
+    def __init__(self, owner=None, tag="SOMETHING", col=(1, 1, 1)):
         self.node = owner
 
-        mnode = bs.newnode('math',
-                           owner=self.node,
-                           attrs={
-                               'input1': (0, 1.5, 0),
-                               'operation': 'add'
-                           })
+        # Position node slightly above the player's head
+        mnode = bs.newnode(
+            'math',
+            owner=self.node,
+            attrs={'input1': (0, 1.6, 0), 'operation': 'add'}
+        )
         self.node.connectattr('torso_position', mnode, 'input2')
-        if '\\' in tag:
-            tag = tag.replace('\\d', ('\ue048'))
-            tag = tag.replace('\\c', ('\ue043'))
-            tag = tag.replace('\\h', ('\ue049'))
-            tag = tag.replace('\\s', ('\ue046'))
-            tag = tag.replace('\\n', ('\ue04b'))
-            tag = tag.replace('\\f', ('\ue04f'))
-            tag = tag.replace('\\g', ('\ue027'))
-            tag = tag.replace('\\i', ('\ue03a'))
-            tag = tag.replace('\\m', ('\ue04d'))
-            tag = tag.replace('\\t', ('\ue01f'))
-            tag = tag.replace('\\bs', ('\ue01e'))
-            tag = tag.replace('\\j', ('\ue010'))
-            tag = tag.replace('\\e', ('\ue045'))
-            tag = tag.replace('\\l', ('\ue047'))
-            tag = tag.replace('\\a', ('\ue020'))
-            tag = tag.replace('\\b', ('\ue00c'))
 
-        self.tag_text = bs.newnode('text',
-                                   owner=self.node,
-                                   attrs={
-                                       'text': tag,
-                                       'in_world': True,
-                                       'shadow': 1.0,
-                                       'flatness': 1.0,
-                                       'color': tuple(col),
-                                       'scale': 0.01,
-                                       'h_align': 'center'
-                                   })
+        # Replace special icons in tag
+        replacements = {
+            '\\d': '\ue048', '\\c': '\ue043', '\\h': '\ue049', '\\s': '\ue046',
+            '\\n': '\ue04b', '\\f': '\ue04f', '\\g': '\ue027', '\\i': '\ue03a',
+            '\\m': '\ue04d', '\\t': '\ue01f', '\\bs': '\ue01e', '\\j': '\ue010',
+            '\\e': '\ue045', '\\l': '\ue047', '\\a': '\ue020', '\\b': '\ue00c'
+        }
+        for k, v in replacements.items():
+            tag = tag.replace(k, v)
+
+        # Main visible text (the actual tag)
+        self.tag_text = bs.newnode(
+            'text',
+            owner=self.node,
+            attrs={
+                'text': tag,
+                'in_world': True,
+                'shadow': 1.2,
+                'flatness': 0.7,
+                'color': tuple(col),
+                'scale': 0.013,
+                'h_align': 'center'
+            }
+        )
+
+        # Soft glow layer for smooth light effect
+        self.glow = bs.newnode(
+            'text',
+            owner=self.node,
+            attrs={
+                'text': tag,
+                'in_world': True,
+                'shadow': 0.0,
+                'flatness': 1.0,
+                'color': (col[0]*0.5, col[1]*0.5, col[2]*0.5),
+                'scale': 0.017,
+                'opacity': 0.4,
+                'h_align': 'center'
+            }
+        )
+
+        # Attach both layers to position math node
         mnode.connectattr('output', self.tag_text, 'position')
-        if sett["enableTagAnimation"]:
-            bs.animate_array(node=self.tag_text, attr='color', size=3, keys={
-                0.2: (2, 0, 2),
-                0.4: (2, 2, 0),
-                0.6: (0, 2, 2),
-                0.8: (2, 0, 2),
-                1.0: (1, 1, 0),
-                1.2: (0, 1, 1),
-                1.4: (1, 0, 1)
-            }, loop=True)
+        mnode.connectattr('output', self.glow, 'position')
+
+        # === ✨ Animation Magic ===
+        if sett.get("enableTagAnimation", True):
+            # Floating (up-down wave motion)
+            float_anim = bs.newnode('math', owner=self.node, attrs={
+                'input1': (0, 0.1, 0),  # small vertical amplitude
+                'operation': 'add'
+            })
+            self.node.connectattr('torso_position', float_anim, 'input2')
+
+            # Animate Y offset (sinusoidal float)
+            bs.animate_array(
+                node=float_anim,
+                attr='input1',
+                size=3,
+                keys={
+                    0.0: (0, 0.10, 0),
+                    0.5: (0, 0.15, 0),
+                    1.0: (0, 0.10, 0),
+                    1.5: (0, 0.05, 0),
+                    2.0: (0, 0.10, 0)
+                },
+                loop=True
+            )
+
+            float_anim.connectattr('output', self.tag_text, 'position')
+            float_anim.connectattr('output', self.glow, 'position')
+
+            # Wave / moving-light color animation
+            bs.animate_array(
+                node=self.tag_text,
+                attr='color',
+                size=3,
+                keys={
+                    0.0: (1.5, 0.3, 0.3),
+                    0.5: (0.3, 1.3, 0.3),
+                    1.0: (0.3, 0.3, 1.5),
+                    1.5: (1.3, 1.3, 0.3),
+                    2.0: (1.5, 0.3, 1.5),
+                    2.5: tuple(col)
+                },
+                loop=True
+            )
+
+            # Glow intensity pulsing
+            bs.animate(
+                self.glow,
+                'opacity',
+                {0.0: 0.2, 0.6: 0.8, 1.2: 0.2},
+                loop=True
+            )
 
 
 class Rank(object):
