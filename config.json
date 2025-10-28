@@ -10,7 +10,7 @@
    "max_party_size":10,
    "session_max_players_override":12,
    "session_type":"team",
-   "playlist_code":568086,
+   "playlist_code":568087,
    "playlist_shuffle":true,
    "auto_balance_teams":true,
    "enable_telnet":false,
