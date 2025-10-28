@@ -1,5 +1,5 @@
 {
-   "party_name":"⚽|KERALA SUPER LEAGUE|⚽",
+   "party_name":"⚽| KERALA SUPER LEAGUE |⚽",
    "party_is_public":true,
    "authenticate_clients":true,
    "admins":[
@@ -7,10 +7,10 @@
    ],
    "enable_default_kick_voting":true,
    "port":43210,
-   "max_party_size":8,
+   "max_party_size":10,
    "session_max_players_override":12,
    "session_type":"team",
-   "playlist_code":567870,
+   "playlist_code":568086,
    "playlist_shuffle":true,
    "auto_balance_teams":true,
    "enable_telnet":false,

@@ -224,7 +224,6 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         super().on_begin()
 
         self.setup_standard_time_limit(self._time_limit)
-        self.setup_standard_powerup_drops()
         self._puck_spawn_pos = self.map.get_flag_position(None)
         self._spawn_puck()
 
