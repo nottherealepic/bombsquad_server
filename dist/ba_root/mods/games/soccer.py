@@ -162,9 +162,9 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         self._foghorn_sound = bui.getsound('foghorn')
         self._swipsound = bui.getsound('swip')
         self._whistle_sound = bui.getsound('refWhistle')
-        self.puck_model = bs.getmesh('epic_footbal')
-        self.puck_tex = bs.gettexture('circleOutlineNoAlpha')
-        self.puck_scored_tex = bs.gettexture('circleOutlineNoAlpha')
+        self.puck_model = bs.getmesh('impactBomb')
+        self.puck_tex = bs.gettexture('smoke')
+        self.puck_scored_tex = bs.gettexture('smoke')
         self._puck_sound = bs.getsound('metalHit')
         self.puck_material = bs.Material()
         self.puck_material.add_actions(actions=(('modify_part_collision',
