@@ -1,5 +1,5 @@
 {
-   "party_name":"⚽| DIVINE EPIC DUO SOCCER |⚽",
+   "party_name":"GIVE ME NAME",
    "party_is_public":true,
    "authenticate_clients":true,
    "admins":[
@@ -9,8 +9,8 @@
    "port":43210,
    "max_party_size":10,
    "session_max_players_override":12,
-   "session_type":"team",
-   "playlist_code":568087,
+   "session_type":"ffa",
+   "playlist_code":412179,
    "playlist_shuffle":true,
    "auto_balance_teams":true,
    "enable_telnet":false,
@@ -22,8 +22,8 @@
    "idle_exit_minutes":20,
    "show_tutorial":false,
    "team_names":[
-      "ME",
-      "YOU"
+      "GAY ONE",
+      "GAY TWO"
    ],
    "team_colors":[
       [
