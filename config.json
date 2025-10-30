@@ -1,9 +1,9 @@
 {
-   "party_name":"⚽| KERALA SUPER LEAGUE |⚽",
+   "party_name":"⚽| DIVINE EPIC DUO SOCCER |⚽",
    "party_is_public":true,
    "authenticate_clients":true,
    "admins":[
-      "pb-IF4sUGIPEg=="
+      ""
    ],
    "enable_default_kick_voting":true,
    "port":43210,
@@ -16,14 +16,14 @@
    "enable_telnet":false,
    "teams_series_length":7,
    "ffa_series_length":24,
-   "stats_url":"https://discord.gg/XZvW4e4VPb",
+   "stats_url":"https://discord.gg/BSFREE",
    "clean_exit_minutes":60,
    "unclean_exit_minutes":90,
    "idle_exit_minutes":20,
    "show_tutorial":false,
    "team_names":[
-      "KWFC",
-      "MFC"
+      "ME",
+      "YOU"
    ],
    "team_colors":[
       [
