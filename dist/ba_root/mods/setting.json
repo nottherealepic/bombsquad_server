@@ -4,14 +4,14 @@
     "BrodcastCommand": true
   },
   "HostDeviceName": "v1.4",
-  "HostName": "EPIC",
+  "HostName": "WWW.BSFREE.HOST",
   "KickVoteMsgType": "chat",
   "ScoreScreenAnnouncement": {
     "enable": true,
     "msg": [
       "click stats button to join discord",
-      "-------------------------",
-      "----------"
+      "HOSTED ON BSFREE.HOST",
+      "bsfree.host/bsserver"
     ]
   },
   "ShowKickVoteStarterName": true,
@@ -38,7 +38,7 @@
   "ballistica_web": {
     "enable": true,
     "server_password": "my_secerT_password_very_hard",
-    "discord_link": "https://discord.gg/XZvW4e4VPb"
+    "discord_link": ""
   },
   "character_chooser": {
     "enable": true
@@ -141,7 +141,7 @@
   "newResultBoard": true,
   "playermod": {
     "default_bomb": "normal",
-    "default_bomb_count": 1,
+    "default_bomb_count": 3,
     "default_boxing_gloves": true,
     "default_shield": false
   },
@@ -158,7 +158,7 @@
   "sameCharacterForTeam": false,
   "statsResetAfterDays": 31,
   "textonmap": {
-    "bottom left watermark": "",
+    "bottom left watermark": "BSFREE",
     "center highlights": {
       "color": [
         1,
@@ -169,11 +169,11 @@
         "type end to start end vote",
         "start msg with prefix .(dot) to send in game popup msg",
         "start msg with prefix ,(comma) to send msg to teammates",
-        "BombSquad Community Server - BCS"
+        "BSFREE"
       ],
       "randomColor": true
     },
-    "top watermark": ""
+    "top watermark": "BSFREE.HOST"
   },
   "useV2Account": false,
   "warnMsg": "WARNING !!!",

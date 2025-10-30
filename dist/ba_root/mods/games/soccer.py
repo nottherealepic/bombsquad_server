@@ -108,7 +108,7 @@ class Team(bs.Team[Player]):
 class HockeyGame(bs.TeamGameActivity[Player, Team]):
     """Ice hockey game."""
 
-    name = 'KERALA SUPER LEAGUE'
+    name = 'DIVINE EPIC DUO SOCCER'
     description = 'Score some goals.'
     available_settings = [
         bs.IntSetting(
