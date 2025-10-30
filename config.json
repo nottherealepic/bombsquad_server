@@ -10,7 +10,7 @@
    "max_party_size":10,
    "session_max_players_override":12,
    "session_type":"ffasmash",
-   "playlist_code":568384,
+   "playlist_code":568385,
    "playlist_shuffle":true,
    "auto_balance_teams":true,
    "enable_telnet":false,
