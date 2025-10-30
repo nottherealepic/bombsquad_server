@@ -141,7 +141,7 @@
   "newResultBoard": true,
   "playermod": {
     "default_bomb": "normal",
-    "default_bomb_count": 3,
+    "default_bomb_count": 99999,
     "default_boxing_gloves": true,
     "default_shield": false
   },
