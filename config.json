@@ -1,5 +1,5 @@
 {
-   "party_name":"GIVE ME NAME",
+   "party_name":"⚽ | BARCELONAvsREAL MADRID | ⚽",
    "party_is_public":true,
    "authenticate_clients":true,
    "admins":[
@@ -7,33 +7,35 @@
    ],
    "enable_default_kick_voting":true,
    "port":43210,
-   "max_party_size":10,
-   "session_max_players_override":12,
-   "session_type":"ffasmash",
-   "playlist_code":568385,
+   "max_party_size":13,
+   "session_max_players_override":15,
+   "session_type":"soccer",
+   "playlist_code":569612,
    "playlist_shuffle":true,
    "auto_balance_teams":true,
    "enable_telnet":false,
+   "enable_rcon": true,
+   "rcon_password": "MTQzNjA5MTE0ODU1MTg1MjAzMg",
    "teams_series_length":7,
    "ffa_series_length":24,
-   "stats_url":"https://discord.gg/BSFREE",
+   "stats_url":"https://discord.gg/nigga",
    "clean_exit_minutes":60,
    "unclean_exit_minutes":90,
    "idle_exit_minutes":20,
    "show_tutorial":false,
    "team_names":[
-      "GAY ONE",
-      "GAY TWO"
+      "FCB",
+      "RM"
    ],
    "team_colors":[
       [
-         1,
+         0.6,
          0.0,
-         0.0
+         0.8
       ],
       [
-         0,
-         0,
+         1,
+         1,
          1
       ]
    ],
