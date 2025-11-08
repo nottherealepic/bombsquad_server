@@ -108,8 +108,8 @@ class Team(bs.Team[Player]):
 class HockeyGame(bs.TeamGameActivity[Player, Team]):
     """Ice hockey game."""
 
-    name = 'DIVINE EPIC DUO SOCCER'
-    description = 'Score some goals.'
+    name = 'EL CLÁSICO!'
+    description = 'The greatest rivalry.'
     available_settings = [
         bs.IntSetting(
             'Score to Win',
