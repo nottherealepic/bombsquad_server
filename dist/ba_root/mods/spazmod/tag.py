@@ -5,8 +5,12 @@ from stats import mystats
 import babase
 import bascenev1 as bs
 
+# --- Initialize Settings ---
+# Assumes these modules are available in the game environment
 sett = setting.get_settings_data()
 
+
+# --- Utility Functions ---
 
 def addtag(node, player):
     session_player = player.sessionplayer
@@ -54,6 +58,8 @@ def addhp(node, spaz):
         showHP), repeat=True)
 
 
+# --- Primary Tag Class with Per-Character Animation ---
+
 class Tag(object):
     def __init__(self, owner=None, tag="somthing", col=(1, 1, 1)):
         self.node = owner
@@ -82,17 +88,16 @@ class Tag(object):
         if sett["enableTagAnimation"]:
             # --- TRUE LEFT-TO-RIGHT GRADIENT ANIMATION ---
             
-            # Constants determined by testing and necessary to space the letters correctly
-            char_scale = 0.01
-            # Estimated width of one character at scale 0.01. Critical for correct spacing.
-            char_width = 0.008 
+            # CRITICAL SPACING FIX: These values ensure letters are spaced correctly.
+            char_scale = 0.015 
+            char_width = 0.011 
             
             total_width = len(tag) * char_width
             start_x = -total_width / 2.0  # X position of the left edge of the first char
             
             current_x = start_x
-            animation_duration = 1.2  # The full cycle length (fast and energetic)
-            delay_per_character = 0.05  # Key to the "moving wave" effect
+            animation_duration = 1.2  
+            delay_per_character = 0.05  
             
             for i, char in enumerate(tag):
                 # Calculate the center position for this character
@@ -102,7 +107,6 @@ class Tag(object):
                 mnode = bs.newnode('math',
                                    owner=self.node,
                                    attrs={
-                                       # Position X is offset, Y=1.5, Z=0
                                        'input1': (char_center_x, 1.5, 0),
                                        'operation': 'add'
                                    })
@@ -119,7 +123,7 @@ class Tag(object):
                                            'flatness': 1.0,
                                            'color': (1, 1, 1), 
                                            'scale': char_scale,
-                                           'h_align': 'center' # Center align relative to mnode position
+                                           'h_align': 'center' 
                                        })
                 mnode.connectattr('output', char_text, 'position')
                 self.char_nodes.append(char_text)
@@ -127,7 +131,6 @@ class Tag(object):
                 # 3. Apply the delayed, multi-color wave animation
                 start_delay = i * delay_per_character
                 
-                # The keys are shifted by the start_delay to create the wave motion
                 bs.animate_array(node=char_text, attr='color', size=3, keys={
                     start_delay + 0.0: (2.0, 0.0, 2.0),   # Purple
                     start_delay + 0.2: (0.0, 2.0, 2.0),   # Cyan
@@ -141,7 +144,7 @@ class Tag(object):
                 current_x += char_width
             
         else:
-            # --- Non-Animated fallback (Original logic) ---
+            # --- Non-Animated fallback (Original single-node logic) ---
             mnode = bs.newnode('math',
                                owner=self.node,
                                attrs={
@@ -163,7 +166,7 @@ class Tag(object):
                                            'h_align': 'center'
                                        })
             mnode.connectattr('output', self.tag_text, 'position')
-            self.char_nodes.append(self.tag_text) # Store for potential cleanup
+            self.char_nodes.append(self.tag_text)
 
     def animate_death_flow(self):
         """
@@ -171,11 +174,11 @@ class Tag(object):
         This function should be called from the player's Spaz class when it receives a DieMessage.
         """
         if not sett["enableTagAnimation"]:
-            self.delete_nodes()
+            # If animation is disabled, just delete the tag immediately
+            self.delete_mnodes()
             return
             
         # Animation Keys: Fast cycle with a fade to black/transparent
-        # Note: Colors use a faster, high-contrast pulse
         death_keys = {
             0.0: (2.0, 2.0, 0.0),   # Yellow
             0.05: (2.0, 0.0, 2.0),  # Magenta flash
@@ -186,9 +189,9 @@ class Tag(object):
         # Apply the death animation to each character with a sequential delay
         for i, char_node in enumerate(self.char_nodes):
             # Stop any current animation loop
+            # Note: babase.animate is used here just to cancel the array animation
             babase.animate(char_node, 'scale', {0: char_node.scale}, repeat=False) 
             
-            # Calculate a quick, fading delay
             start_delay = i * 0.04 
             
             # Apply the color flow animation
@@ -207,6 +210,8 @@ class Tag(object):
         for mnode in self.mnodes:
             mnode.delete()
 
+
+# --- Rank Class ---
 
 class Rank(object):
     def __init__(self, owner=None, rank=99):
@@ -240,6 +245,8 @@ class Rank(object):
                                     })
         mnode.connectattr('output', self.rank_text, 'position')
 
+
+# --- HitPoint Class ---
 
 class HitPoint(object):
     def __init__(self, position=(0, 1.5, 0), owner=None, prefix='0', shad=1.2):
