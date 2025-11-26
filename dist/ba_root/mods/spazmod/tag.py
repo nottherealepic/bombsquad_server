@@ -8,6 +8,8 @@ import bascenev1 as bs
 sett = setting.get_settings_data()
 
 
+# (Functions addtag, addrank, addhp remain the same)
+# ...
 def addtag(node, player):
     session_player = player.sessionplayer
     account_id = session_player.get_v1_account_id()
@@ -50,12 +52,14 @@ def addhp(node, spaz):
             spaz.hptimer = None
     spaz.hptimer = bs.Timer(2, babase.Call(
         showHP), repeat=True)
+# ...
 
 
 class Tag(object):
     def __init__(self, owner=None, tag="somthing", col=(1, 1, 1)):
         self.node = owner
 
+        # Create the primary math node to link the tag to the player's torso
         mnode = bs.newnode('math',
                            owner=self.node,
                            attrs={
@@ -63,6 +67,8 @@ class Tag(object):
                                'operation': 'add'
                            })
         self.node.connectattr('torso_position', mnode, 'input2')
+        
+        # Icon replacement logic (same as before)
         if '\\' in tag:
             tag = tag.replace('\\d', ('\ue048'))
             tag = tag.replace('\\c', ('\ue043'))
@@ -81,6 +87,40 @@ class Tag(object):
             tag = tag.replace('\\a', ('\ue020'))
             tag = tag.replace('\\b', ('\ue00c'))
 
+        # --- SECONDARY TEXT NODE: HOLOGRAM SHADOW ---
+        # This node is slightly offset (0.05 on Z-axis) to create a 3D effect.
+        if sett["enableTagAnimation"]:
+            # Secondary math node for hologram offset
+            mnode_holo = bs.newnode('math',
+                                    owner=self.node,
+                                    attrs={
+                                        'input1': (0, 1.5, 0.05), # Offset in Z for 3D look
+                                        'operation': 'add'
+                                    })
+            self.node.connectattr('torso_position', mnode_holo, 'input2')
+            
+            self.tag_text_holo = bs.newnode('text',
+                                            owner=self.node,
+                                            attrs={
+                                                'text': tag,
+                                                'in_world': True,
+                                                'shadow': 0.0, # Less shadow for cleaner look
+                                                'flatness': 1.0,
+                                                'color': (0.0, 2.0, 2.0), # Fixed contrasting color (Cyan)
+                                                'scale': 0.011, # Slightly larger scale
+                                                'h_align': 'center'
+                                            })
+            mnode_holo.connectattr('output', self.tag_text_holo, 'position')
+            
+            # FAST PULSE ANIMATION for the hologram shadow
+            bs.animate_array(node=self.tag_text_holo, attr='color', size=3, keys={
+                0.0: (0.0, 2.0, 2.0),
+                0.5: (0.5, 0.5, 2.0),
+                1.0: (0.0, 2.0, 2.0)
+            }, loop=True)
+
+
+        # --- PRIMARY TEXT NODE: MAIN GRADIENT ---
         self.tag_text = bs.newnode('text',
                                    owner=self.node,
                                    attrs={
@@ -94,21 +134,19 @@ class Tag(object):
                                    })
         mnode.connectattr('output', self.tag_text, 'position')
         
-        # --- ENHANCED PREMIUM GRADIENT ANIMATION START ---
+        # SLOW, SMOOTH GRADIENT ANIMATION for the main text
         if sett["enableTagAnimation"]:
-            # Using higher color values (like 2.0) for a glowing, premium effect.
-            # 6 keys over 4.0 seconds provide a slow, smooth, wave-like gradient.
             bs.animate_array(node=self.tag_text, attr='color', size=3, keys={
-                0.0: (1.5, 0.5, 2.0),  # Bright Magenta/Purple
-                0.8: (0.5, 1.5, 2.0),  # Bright Cyan/Blue
-                1.6: (2.0, 2.0, 0.5),  # Bright Yellow/Gold
-                2.4: (2.0, 0.5, 0.5),  # Bright Red
-                3.2: (0.5, 2.0, 0.5),  # Bright Green
-                4.0: (1.5, 0.5, 2.0)   # Loop back to Magenta/Purple
+                0.0: (2.0, 0.5, 1.5),  # Bright Pink/Red
+                1.0: (0.5, 1.5, 2.0),  # Bright Cyan/Blue
+                2.0: (2.0, 2.0, 0.5),  # Bright Yellow/Gold
+                3.0: (2.0, 0.5, 0.5),  # Bright Red
+                4.0: (2.0, 0.5, 1.5)   # Loop back smoothly
             }, loop=True)
-        # --- ENHANCED PREMIUM GRADIENT ANIMATION END ---
 
 
+# (Rank and HitPoint classes remain the same)
+# ...
 class Rank(object):
     def __init__(self, owner=None, rank=99):
         self.node = owner
