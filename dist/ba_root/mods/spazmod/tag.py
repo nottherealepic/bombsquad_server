@@ -55,16 +55,8 @@ def addhp(node, spaz):
 class Tag(object):
     def __init__(self, owner=None, tag="somthing", col=(1, 1, 1)):
         self.node = owner
-
-        mnode = bs.newnode('math',
-                           owner=self.node,
-                           attrs={
-                               'input1': (0, 1.5, 0),
-                               'operation': 'add'
-                           })
-        self.node.connectattr('torso_position', mnode, 'input2')
         
-        # Icon replacement logic
+        # Icon replacement logic (same as before, applied to the whole string)
         if '\\' in tag:
             tag = tag.replace('\\d', ('\ue048'))
             tag = tag.replace('\\c', ('\ue043'))
@@ -83,38 +75,91 @@ class Tag(object):
             tag = tag.replace('\\a', ('\ue020'))
             tag = tag.replace('\\b', ('\ue00c'))
 
-        self.tag_text = bs.newnode('text',
+        if sett["enableTagAnimation"]:
+            # --- PER-CHARACTER ANIMATION LOGIC ---
+            
+            # Constants for positioning and animation timing
+            char_scale = 0.01  # Scale of each character
+            char_width = 0.007 # Estimated width of one character for spacing
+            total_width = len(tag) * char_width
+            current_x_offset = -total_width / 2.0  # Start position for centered text
+            
+            # Animation timing properties
+            animation_duration = 1.2  # The full cycle length (fast and energetic)
+            delay_per_character = 0.05  # Key to the "moving wave" effect
+            
+            self.chars = []
+            
+            for i, char in enumerate(tag):
+                # 1. Create a math node for this specific character's position
+                mnode = bs.newnode('math',
                                    owner=self.node,
                                    attrs={
-                                       'text': tag,
-                                       'in_world': True,
-                                       'shadow': 1.0,
-                                       'flatness': 1.0,
-                                       'color': tuple(col),
-                                       'scale': 0.01,
-                                       'h_align': 'center'
+                                       # Position Y=1.5, X is offset, Z=0
+                                       'input1': (current_x_offset + char_width / 2.0, 1.5, 0),
+                                       'operation': 'add'
                                    })
-        mnode.connectattr('output', self.tag_text, 'position')
-        
-        # --- HIGH-ENERGY WAVE SIMULATION ANIMATION START ---
-        # A 2.0 second cycle with 9 keyframes to create complex, dazzling color transitions.
-        # High-value colors (>1.0) provide the bright, glowing 'premium' look.
-        if sett["enableTagAnimation"]:
-            bs.animate_array(node=self.tag_text, attr='color', size=3, keys={
-                0.0: (2.0, 0.5, 1.5),  # Deep Pink/Red (Wave Start)
-                0.2: (0.5, 2.0, 2.0),  # Bright Cyan/Aqua (Wave Crest)
-                0.4: (2.0, 2.0, 0.5),  # Bright Yellow/Gold (Sunlight on Wave)
-                0.6: (0.5, 1.5, 0.5),  # Green/Lime (Randomized Color)
-                0.8: (2.0, 0.0, 0.0),  # Strong Red (Burst Effect)
-                1.1: (1.0, 1.0, 2.0),  # Light Blue/White (Wave Foam)
-                1.4: (2.0, 1.5, 0.0),  # Bright Orange/Gold (Sunset Color)
-                1.7: (0.0, 2.0, 0.0),  # Vibrant Green
-                2.0: (2.0, 0.5, 1.5)   # Loop back to Deep Pink/Red
-            }, loop=True)
-        # --- HIGH-ENERGY WAVE SIMULATION ANIMATION END ---
+                self.node.connectattr('torso_position', mnode, 'input2')
+                
+                # 2. Create the text node for this single character
+                char_text = bs.newnode('text',
+                                       owner=self.node,
+                                       attrs={
+                                           'text': char,
+                                           'in_world': True,
+                                           'shadow': 1.0,
+                                           'flatness': 1.0,
+                                           'color': (1, 1, 1), # Will be overridden by animation
+                                           'scale': char_scale,
+                                           'h_align': 'center' # Center align this single character
+                                       })
+                mnode.connectattr('output', char_text, 'position')
+                self.chars.append(char_text)
+                
+                # 3. Apply the delayed, multi-color sea wave animation
+                start_delay = i * delay_per_character
+                
+                # The keys are shifted by the start_delay
+                bs.animate_array(node=char_text, attr='color', size=3, keys={
+                    # Keys use time relative to the overall animation cycle (1.2s)
+                    start_delay + 0.0: (2.0, 0.0, 2.0),   # Purple
+                    start_delay + 0.2: (0.0, 2.0, 2.0),   # Cyan
+                    start_delay + 0.4: (2.0, 2.0, 0.0),   # Yellow/Gold
+                    start_delay + 0.6: (2.0, 0.5, 0.5),   # Red
+                    start_delay + 0.8: (0.5, 2.0, 0.5),   # Green
+                    start_delay + 1.2: (2.0, 0.0, 2.0)    # Loop back
+                }, loop=True)
+                
+                # 4. Update offset for the next character
+                current_x_offset += char_width
+            
+        else:
+            # --- Non-Animated fallback (Original logic) ---
+            mnode = bs.newnode('math',
+                               owner=self.node,
+                               attrs={
+                                   'input1': (0, 1.5, 0),
+                                   'operation': 'add'
+                               })
+            self.node.connectattr('torso_position', mnode, 'input2')
+            
+            self.tag_text = bs.newnode('text',
+                                       owner=self.node,
+                                       attrs={
+                                           'text': tag,
+                                           'in_world': True,
+                                           'shadow': 1.0,
+                                           'flatness': 1.0,
+                                           'color': tuple(col),
+                                           'scale': 0.01,
+                                           'h_align': 'center'
+                                       })
+            mnode.connectattr('output', self.tag_text, 'position')
 
 
 class Rank(object):
+# (Rank and HitPoint classes remain the same as the original)
+# ...
     def __init__(self, owner=None, rank=99):
         self.node = owner
         mnode = bs.newnode('math',
