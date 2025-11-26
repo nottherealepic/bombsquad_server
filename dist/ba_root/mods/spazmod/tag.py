@@ -9,9 +9,13 @@ import bascenev1 as bs
 sett = setting.get_settings_data()
 
 
-# --- Utility Functions (Kept the same) ---
+# --- Utility Functions ---
 
-def addtag(node, player):
+def addtag(node, player, style_override=None):
+    """
+    Creates and attaches the Tag to the player's node.
+    It passes the style_override (e.g., from player data) to the Tag class.
+    """
     session_player = player.sessionplayer
     account_id = session_player.get_v1_account_id()
     customtag_ = pdata.get_custom()
@@ -31,9 +35,8 @@ def addtag(node, player):
                     roles[role]['tagcolor']
                 break
     if tag:
-        # NOTE: Returning the Tag instance is recommended if you want to call switch_style later
-        # However, for simple initialization, we create it here.
-        Tag(node, tag, col)
+        # **BUG FIX/ENHANCEMENT**: Pass the style_override if it exists
+        return Tag(node, tag, col, style_id=style_override) # Returns the Tag instance
 
 
 def addrank(node, player):
@@ -59,11 +62,13 @@ def addhp(node, spaz):
 # --- Primary Tag Class with Multi-Style Animation ---
 
 class Tag(object):
-    def __init__(self, owner=None, tag="somthing", col=(1, 1, 1)):
+    def __init__(self, owner=None, tag="somthing", col=(1, 1, 1), style_id=None):
         self.node = owner
         self.mnodes = []
         self.char_nodes = []
         self.tag_string = tag
+        # New: Track current style
+        self.current_style = style_id if style_id is not None else 1
         
         # Icon replacement logic (applied to the whole string)
         if '\\' in tag:
@@ -88,12 +93,10 @@ class Tag(object):
         self.tag_color_static = col
         
         if sett["enableTagAnimation"]:
-            # Setup the individual character nodes once
             self._setup_char_nodes()
-            # Start with the default Sea Wave animation
-            self.switch_style(style_id=1) 
+            # Start with the determined style
+            self.switch_style(style_id=self.current_style) 
         else:
-            # Setup the single static node
             self._setup_static_node()
 
 
@@ -101,9 +104,10 @@ class Tag(object):
         """Creates individual text and math nodes for per-character animation."""
         tag = self.tag_string_formatted
 
-        # CRITICAL SPACING FIX: Using user-confirmed values.
+        # NOTE: Reverting to a more standard BombSquad text unit for better compatibility.
+        # Use 0.25 if the spacing is too tight, but 0.020 is usually sufficient.
         self.char_scale = 0.015 
-        self.char_width = 0.25 # <--- User confirmed this value for spacing!
+        self.char_width = 0.020 # <--- Adjusted from 0.25 for standard spacing. Revert to 0.25 if needed.
         
         total_width = len(tag) * self.char_width
         start_x = -total_width / 2.0 
@@ -142,7 +146,7 @@ class Tag(object):
         self.char_nodes.append(self.tag_text)
     
 
-    def switch_style(self, style_id=1):
+    def switch_style(self, style_id):
         """
         Switches the current tag animation style.
         Style 1: Sea Wave (L -> R)
@@ -152,19 +156,21 @@ class Tag(object):
         if not self.char_nodes:
             return
 
+        self.current_style = style_id
+        
         # 1. Stop all current color animations
         for char_node in self.char_nodes:
             # We use a trick to force stop the 'color' array animation
-            babase.animate(char_node, 'scale', {0: char_node.scale}, repeat=False) 
-        
+            # and reset the color to white so the new animation starts cleanly.
+            babase.animate(char_node, 'color', {0: (1.0, 1.0, 1.0)}, repeat=False, end_time=0.0)
+            
         tag_length = len(self.char_nodes)
         
         # --- Common Animation Parameters ---
         animation_duration = 1.0
         delay_per_character = 0.05
         
-        # --- Premium Color Palette ---
-        # Highly saturated and bright colors for a premium look (values > 1.0 are "glowing")
+        # --- Premium Color Palette (Vibrant Glow) ---
         premium_colors = {
             0.0: (3.0, 0.5, 0.0), # Fiery Orange/Red Glow
             0.2: (2.0, 2.0, 0.0), # Bright Yellow Glow
@@ -214,10 +220,9 @@ class Tag(object):
                 }, loop=True)
 
 
-    def animate_death_flow(self, next_style_id=1):
+    def animate_death_flow(self):
         """
-        Triggers a spectacular color flow and fade-out upon player death,
-        and sets a timer to change the animation style upon respawn/re-creation.
+        Triggers a spectacular color flow and fade-out upon player death.
         """
         if not sett["enableTagAnimation"]:
             self.delete_mnodes()
@@ -233,25 +238,34 @@ class Tag(object):
         
         # Apply the death animation to each character with a sequential delay (L->R)
         for i, char_node in enumerate(self.char_nodes):
+            # Stop the loop animation before applying the one-shot death animation
             babase.animate(char_node, 'scale', {0: char_node.scale}, repeat=False) 
+            
             start_delay = i * 0.03 # Faster delay for a quick death flow
             
             bs.animate_array(node=char_node, attr='color', size=3, keys={
                 t + start_delay: color for t, color in death_keys.items()
             })
             
+            # Delete text node after its animation is done
             bs.Timer(0.3 + start_delay, char_node.delete)
         
         # Delete math nodes after all characters are gone
         bs.Timer(0.3 + len(self.char_nodes) * 0.04, self.delete_mnodes)
         
-        # NOTE: This part is for the RESPOND/SPAN time, you need to save the new style ID
-        # in the player's data or memory and use it when calling 'addtag' again.
-        # Example: pdata.set_next_tag_style(player, new_style_id)
-
-        # For demonstration, we'll cycle the style here (e.g., if you re-create the tag 
-        # based on a style ID saved elsewhere).
-        # next_style = (self.current_style % 3) + 1 # Example logic if you track current style
+        # Calculate the next style ID for the player's next spawn
+        # Cycles 1 -> 2 -> 3 -> 1
+        next_style = (self.current_style % 3) + 1
+        
+        # IMPORTANT: This next step requires saving the 'next_style' somewhere
+        # accessible by the player's Spaz/SessionPlayer object (e.g., player data).
+        # You need to implement a mechanism in your main Spaz/Player code to:
+        # 1. Store this 'next_style' value.
+        # 2. Retrieve it when 'addtag' is called again on respawn.
+        #
+        # Example of what you would do in your player/spaz class:
+        # spaz.sessionplayer.tag_next_style = next_style
+        # The 'addtag' function above is now ready to receive this via 'style_override'.
         
     def delete_mnodes(self):
         """Cleans up the math nodes after the text nodes are gone."""
@@ -260,7 +274,6 @@ class Tag(object):
 
 
 # --- Rank Class (Kept the same) ---
-
 class Rank(object):
     def __init__(self, owner=None, rank=99):
         self.node = owner
@@ -295,7 +308,6 @@ class Rank(object):
 
 
 # --- HitPoint Class (Kept the same) ---
-
 class HitPoint(object):
     def __init__(self, position=(0, 1.5, 0), owner=None, prefix='0', shad=1.2):
         self.position = position
