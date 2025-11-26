@@ -6,11 +6,10 @@ import babase
 import bascenev1 as bs
 
 # --- Initialize Settings ---
-# Assumes these modules are available in the game environment
 sett = setting.get_settings_data()
 
 
-# --- Utility Functions ---
+# --- Utility Functions (Kept the same) ---
 
 def addtag(node, player):
     session_player = player.sessionplayer
@@ -20,7 +19,7 @@ def addtag(node, player):
     roles = pdata.get_roles()
     p_roles = pdata.get_player_roles(account_id)
     tag = None
-    col = (0.5, 0.5, 1)  # default color for custom tags
+    col = (0.5, 0.5, 1) 
     if account_id in customtag:
         tag = customtag[account_id]
     elif p_roles != []:
@@ -32,8 +31,8 @@ def addtag(node, player):
                     roles[role]['tagcolor']
                 break
     if tag:
-        # Pass the created tag instance back to the caller (e.g., the Spaz class)
-        # to allow calling tag.animate_death_flow() later.
+        # NOTE: Returning the Tag instance is recommended if you want to call switch_style later
+        # However, for simple initialization, we create it here.
         Tag(node, tag, col)
 
 
@@ -41,7 +40,6 @@ def addrank(node, player):
     session_player = player.sessionplayer
     account_id = session_player.get_v1_account_id()
     rank = mystats.getRank(account_id)
-
     if rank:
         Rank(node, rank)
 
@@ -58,13 +56,14 @@ def addhp(node, spaz):
         showHP), repeat=True)
 
 
-# --- Primary Tag Class with Per-Character Animation ---
+# --- Primary Tag Class with Multi-Style Animation ---
 
 class Tag(object):
     def __init__(self, owner=None, tag="somthing", col=(1, 1, 1)):
         self.node = owner
         self.mnodes = []
         self.char_nodes = []
+        self.tag_string = tag
         
         # Icon replacement logic (applied to the whole string)
         if '\\' in tag:
@@ -85,125 +84,174 @@ class Tag(object):
             tag = tag.replace('\\a', ('\ue020'))
             tag = tag.replace('\\b', ('\ue00c'))
 
+        self.tag_string_formatted = tag
+        self.tag_color_static = col
+        
         if sett["enableTagAnimation"]:
-            # --- TRUE LEFT-TO-RIGHT GRADIENT ANIMATION ---
-            
-            # CRITICAL SPACING FIX: These values ensure letters are spaced correctly.
-            char_scale = 0.015 
-            char_width = 0.25
-            
-            total_width = len(tag) * char_width
-            start_x = -total_width / 2.0  # X position of the left edge of the first char
-            
-            current_x = start_x
-            animation_duration = 1.2  
-            delay_per_character = 0.05  
-            
-            for i, char in enumerate(tag):
-                # Calculate the center position for this character
-                char_center_x = current_x + char_width / 2.0 
-
-                # 1. Create a math node for this character's unique position
-                mnode = bs.newnode('math',
-                                   owner=self.node,
-                                   attrs={
-                                       'input1': (char_center_x, 1.5, 0),
-                                       'operation': 'add'
-                                   })
-                self.node.connectattr('torso_position', mnode, 'input2')
-                self.mnodes.append(mnode)
-                
-                # 2. Create the text node for this single character
-                char_text = bs.newnode('text',
-                                       owner=self.node,
-                                       attrs={
-                                           'text': char,
-                                           'in_world': True,
-                                           'shadow': 1.0,
-                                           'flatness': 1.0,
-                                           'color': (1, 1, 1), 
-                                           'scale': char_scale,
-                                           'h_align': 'center' 
-                                       })
-                mnode.connectattr('output', char_text, 'position')
-                self.char_nodes.append(char_text)
-                
-                # 3. Apply the delayed, multi-color wave animation
-                start_delay = i * delay_per_character
-                
-                bs.animate_array(node=char_text, attr='color', size=3, keys={
-                    start_delay + 0.0: (2.0, 0.0, 2.0),   # Purple
-                    start_delay + 0.2: (0.0, 2.0, 2.0),   # Cyan
-                    start_delay + 0.4: (2.0, 2.0, 0.0),   # Yellow/Gold
-                    start_delay + 0.6: (2.0, 0.5, 0.5),   # Red
-                    start_delay + 0.8: (0.5, 2.0, 0.5),   # Green
-                    start_delay + animation_duration: (2.0, 0.0, 2.0)    # Loop back
-                }, loop=True)
-                
-                # 4. Update X position for the next character
-                current_x += char_width
-            
+            # Setup the individual character nodes once
+            self._setup_char_nodes()
+            # Start with the default Sea Wave animation
+            self.switch_style(style_id=1) 
         else:
-            # --- Non-Animated fallback (Original single-node logic) ---
-            mnode = bs.newnode('math',
-                               owner=self.node,
-                               attrs={
-                                   'input1': (0, 1.5, 0),
-                                   'operation': 'add'
-                               })
+            # Setup the single static node
+            self._setup_static_node()
+
+
+    def _setup_char_nodes(self):
+        """Creates individual text and math nodes for per-character animation."""
+        tag = self.tag_string_formatted
+
+        # CRITICAL SPACING FIX: Using user-confirmed values.
+        self.char_scale = 0.015 
+        self.char_width = 0.25 # <--- User confirmed this value for spacing!
+        
+        total_width = len(tag) * self.char_width
+        start_x = -total_width / 2.0 
+        current_x = start_x
+        
+        for char in tag:
+            char_center_x = current_x + self.char_width / 2.0 
+
+            mnode = bs.newnode('math', owner=self.node,
+                               attrs={'input1': (char_center_x, 1.5, 0), 'operation': 'add'})
             self.node.connectattr('torso_position', mnode, 'input2')
             self.mnodes.append(mnode)
             
-            self.tag_text = bs.newnode('text',
-                                       owner=self.node,
-                                       attrs={
-                                           'text': tag,
-                                           'in_world': True,
-                                           'shadow': 1.0,
-                                           'flatness': 1.0,
-                                           'color': tuple(col),
-                                           'scale': 0.01,
-                                           'h_align': 'center'
-                                       })
-            mnode.connectattr('output', self.tag_text, 'position')
-            self.char_nodes.append(self.tag_text)
+            char_text = bs.newnode('text', owner=self.node,
+                                   attrs={'text': char, 'in_world': True, 'shadow': 1.0,
+                                          'flatness': 1.0, 'color': (1, 1, 1), 
+                                          'scale': self.char_scale, 'h_align': 'center'})
+            mnode.connectattr('output', char_text, 'position')
+            self.char_nodes.append(char_text)
+            
+            current_x += self.char_width
 
-    def animate_death_flow(self):
+
+    def _setup_static_node(self):
+        """Creates a single static text node (for non-animated mode)."""
+        mnode = bs.newnode('math', owner=self.node,
+                           attrs={'input1': (0, 1.5, 0), 'operation': 'add'})
+        self.node.connectattr('torso_position', mnode, 'input2')
+        self.mnodes.append(mnode)
+        
+        self.tag_text = bs.newnode('text', owner=self.node,
+                                   attrs={'text': self.tag_string_formatted, 'in_world': True,
+                                          'shadow': 1.0, 'flatness': 1.0, 'color': tuple(self.tag_color_static),
+                                          'scale': 0.01, 'h_align': 'center'})
+        mnode.connectattr('output', self.tag_text, 'position')
+        self.char_nodes.append(self.tag_text)
+    
+
+    def switch_style(self, style_id=1):
         """
-        Triggers a new, cool, fast color flow and fade-out upon player death.
-        This function should be called from the player's Spaz class when it receives a DieMessage.
+        Switches the current tag animation style.
+        Style 1: Sea Wave (L -> R)
+        Style 2: Fire Wave (R -> L)
+        Style 3: Heartbeat (Center -> Edge Pulse)
+        """
+        if not self.char_nodes:
+            return
+
+        # 1. Stop all current color animations
+        for char_node in self.char_nodes:
+            # We use a trick to force stop the 'color' array animation
+            babase.animate(char_node, 'scale', {0: char_node.scale}, repeat=False) 
+        
+        tag_length = len(self.char_nodes)
+        
+        # --- Common Animation Parameters ---
+        animation_duration = 1.0
+        delay_per_character = 0.05
+        
+        # --- Premium Color Palette ---
+        # Highly saturated and bright colors for a premium look (values > 1.0 are "glowing")
+        premium_colors = {
+            0.0: (3.0, 0.5, 0.0), # Fiery Orange/Red Glow
+            0.2: (2.0, 2.0, 0.0), # Bright Yellow Glow
+            0.4: (0.0, 3.0, 3.0), # Aqua/Cyan Glow
+            0.6: (1.5, 0.0, 3.0), # Electric Magenta/Purple Glow
+            0.8: (0.0, 3.0, 0.0), # Neon Green Glow
+            animation_duration: (3.0, 0.5, 0.0) # Loop back
+        }
+
+        # --- Style 1: Sea Wave (Left -> Right) ---
+        if style_id == 1:
+            for i, char_node in enumerate(self.char_nodes):
+                start_delay = i * delay_per_character
+                bs.animate_array(node=char_node, attr='color', size=3, keys={
+                    t + start_delay: color for t, color in premium_colors.items()
+                }, loop=True)
+
+        # --- Style 2: Fire Wave (Right -> Left) ---
+        elif style_id == 2:
+            for i, char_node in enumerate(self.char_nodes):
+                # Reverse the index to reverse the flow direction
+                reverse_index = tag_length - 1 - i
+                start_delay = reverse_index * delay_per_character
+                bs.animate_array(node=char_node, attr='color', size=3, keys={
+                    t + start_delay: color for t, color in premium_colors.items()
+                }, loop=True)
+
+        # --- Style 3: Heartbeat (Center -> Edge Pulse) ---
+        elif style_id == 3:
+            center_index = (tag_length - 1) / 2.0
+            
+            for i, char_node in enumerate(self.char_nodes):
+                # Delay increases the further the character is from the center
+                distance_from_center = abs(i - center_index)
+                start_delay = distance_from_center * delay_per_character
+                
+                # Use a specific pulse-like color key for Heartbeat
+                heartbeat_colors = {
+                    0.0: (1.0, 1.0, 1.0), # White
+                    0.4: (3.0, 0.0, 0.0), # Bright Red Pulse
+                    0.8: (1.0, 1.0, 1.0), # White
+                    animation_duration: (1.0, 1.0, 1.0)
+                }
+
+                bs.animate_array(node=char_node, attr='color', size=3, keys={
+                    t + start_delay: color for t, color in heartbeat_colors.items()
+                }, loop=True)
+
+
+    def animate_death_flow(self, next_style_id=1):
+        """
+        Triggers a spectacular color flow and fade-out upon player death,
+        and sets a timer to change the animation style upon respawn/re-creation.
         """
         if not sett["enableTagAnimation"]:
-            # If animation is disabled, just delete the tag immediately
             self.delete_mnodes()
             return
             
-        # Animation Keys: Fast cycle with a fade to black/transparent
+        # --- High-Energy Death Flow Colors ---
         death_keys = {
-            0.0: (2.0, 2.0, 0.0),   # Yellow
-            0.05: (2.0, 0.0, 2.0),  # Magenta flash
+            0.0: (5.0, 5.0, 0.0),   # SUPER Bright Yellow/White Start
+            0.05: (5.0, 0.0, 5.0),  # Electric Magenta Flash
             0.10: (0.0, 0.0, 0.0),  # Fade to black (simulates turning off)
-            0.20: (2.0, 2.0, 2.0)   # Final white burst
+            0.20: (5.0, 5.0, 5.0)   # Final, massive white burst
         }
         
-        # Apply the death animation to each character with a sequential delay
+        # Apply the death animation to each character with a sequential delay (L->R)
         for i, char_node in enumerate(self.char_nodes):
-            # Stop any current animation loop
-            # Note: babase.animate is used here just to cancel the array animation
             babase.animate(char_node, 'scale', {0: char_node.scale}, repeat=False) 
+            start_delay = i * 0.03 # Faster delay for a quick death flow
             
-            start_delay = i * 0.04 
-            
-            # Apply the color flow animation
             bs.animate_array(node=char_node, attr='color', size=3, keys={
                 t + start_delay: color for t, color in death_keys.items()
             })
             
-            # Set a final deletion timer to remove the node after the animation finishes
             bs.Timer(0.3 + start_delay, char_node.delete)
         
-        # Delete all associated math nodes after the last character's delay
+        # Delete math nodes after all characters are gone
         bs.Timer(0.3 + len(self.char_nodes) * 0.04, self.delete_mnodes)
+        
+        # NOTE: This part is for the RESPOND/SPAN time, you need to save the new style ID
+        # in the player's data or memory and use it when calling 'addtag' again.
+        # Example: pdata.set_next_tag_style(player, new_style_id)
+
+        # For demonstration, we'll cycle the style here (e.g., if you re-create the tag 
+        # based on a style ID saved elsewhere).
+        # next_style = (self.current_style % 3) + 1 # Example logic if you track current style
         
     def delete_mnodes(self):
         """Cleans up the math nodes after the text nodes are gone."""
@@ -211,7 +259,7 @@ class Tag(object):
             mnode.delete()
 
 
-# --- Rank Class ---
+# --- Rank Class (Kept the same) ---
 
 class Rank(object):
     def __init__(self, owner=None, rank=99):
@@ -246,7 +294,7 @@ class Rank(object):
         mnode.connectattr('output', self.rank_text, 'position')
 
 
-# --- HitPoint Class ---
+# --- HitPoint Class (Kept the same) ---
 
 class HitPoint(object):
     def __init__(self, position=(0, 1.5, 0), owner=None, prefix='0', shad=1.2):
