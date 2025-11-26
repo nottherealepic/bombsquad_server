@@ -90,7 +90,7 @@ class Tag(object):
             
             # CRITICAL SPACING FIX: These values ensure letters are spaced correctly.
             char_scale = 0.015 
-            char_width = 0.35
+            char_width = 0.25
             
             total_width = len(tag) * char_width
             start_x = -total_width / 2.0  # X position of the left edge of the first char
