@@ -35,8 +35,9 @@ def addtag(node, player, style_override=None):
                     roles[role]['tagcolor']
                 break
     if tag:
-        # **BUG FIX/ENHANCEMENT**: Pass the style_override if it exists
-        return Tag(node, tag, col, style_id=style_override) # Returns the Tag instance
+        # Returns the Tag instance for external use (like calling animate_death_flow)
+        return Tag(node, tag, col, style_id=style_override) 
+    return None # Return None if no tag was created
 
 
 def addrank(node, player):
@@ -59,7 +60,7 @@ def addhp(node, spaz):
         showHP), repeat=True)
 
 
-# --- Primary Tag Class with Multi-Style Animation ---
+# --- Primary Tag Class with Multi-Style Animation (FIXED) ---
 
 class Tag(object):
     def __init__(self, owner=None, tag="somthing", col=(1, 1, 1), style_id=None):
@@ -67,10 +68,8 @@ class Tag(object):
         self.mnodes = []
         self.char_nodes = []
         self.tag_string = tag
-        # New: Track current style
         self.current_style = style_id if style_id is not None else 1
         
-        # Icon replacement logic (applied to the whole string)
         if '\\' in tag:
             tag = tag.replace('\\d', ('\ue048'))
             tag = tag.replace('\\c', ('\ue043'))
@@ -94,7 +93,6 @@ class Tag(object):
         
         if sett["enableTagAnimation"]:
             self._setup_char_nodes()
-            # Start with the determined style
             self.switch_style(style_id=self.current_style) 
         else:
             self._setup_static_node()
@@ -103,11 +101,8 @@ class Tag(object):
     def _setup_char_nodes(self):
         """Creates individual text and math nodes for per-character animation."""
         tag = self.tag_string_formatted
-
-        # NOTE: Reverting to a more standard BombSquad text unit for better compatibility.
-        # Use 0.25 if the spacing is too tight, but 0.020 is usually sufficient.
         self.char_scale = 0.015 
-        self.char_width = 0.020 # <--- Adjusted from 0.25 for standard spacing. Revert to 0.25 if needed.
+        self.char_width = 0.25 
         
         total_width = len(tag) * self.char_width
         start_x = -total_width / 2.0 
@@ -116,15 +111,23 @@ class Tag(object):
         for char in tag:
             char_center_x = current_x + self.char_width / 2.0 
 
+            # MATH NODE is owned by self.node to follow the character's torso position
             mnode = bs.newnode('math', owner=self.node,
                                attrs={'input1': (char_center_x, 1.5, 0), 'operation': 'add'})
             self.node.connectattr('torso_position', mnode, 'input2')
             self.mnodes.append(mnode)
             
-            char_text = bs.newnode('text', owner=self.node,
-                                   attrs={'text': char, 'in_world': True, 'shadow': 1.0,
-                                          'flatness': 1.0, 'color': (1, 1, 1), 
-                                          'scale': self.char_scale, 'h_align': 'center'})
+            # TEXT NODE is NOT owned by self.node and uses is_area_display: True 
+            # to prevent physics bugs that cause the player to stick.
+            char_text = bs.newnode('text', 
+                                   attrs={'text': char, 
+                                          'in_world': True, 
+                                          'is_area_display': True, 
+                                          'shadow': 1.0,
+                                          'flatness': 1.0, 
+                                          'color': (1, 1, 1), 
+                                          'scale': self.char_scale, 
+                                          'h_align': 'center'})
             mnode.connectattr('output', char_text, 'position')
             self.char_nodes.append(char_text)
             
@@ -138,10 +141,15 @@ class Tag(object):
         self.node.connectattr('torso_position', mnode, 'input2')
         self.mnodes.append(mnode)
         
-        self.tag_text = bs.newnode('text', owner=self.node,
-                                   attrs={'text': self.tag_string_formatted, 'in_world': True,
-                                          'shadow': 1.0, 'flatness': 1.0, 'color': tuple(self.tag_color_static),
-                                          'scale': 0.01, 'h_align': 'center'})
+        self.tag_text = bs.newnode('text',
+                                   attrs={'text': self.tag_string_formatted, 
+                                          'in_world': True,
+                                          'is_area_display': True, # CRITICAL FIX
+                                          'shadow': 1.0, 
+                                          'flatness': 1.0, 
+                                          'color': tuple(self.tag_color_static),
+                                          'scale': 0.01, 
+                                          'h_align': 'center'})
         mnode.connectattr('output', self.tag_text, 'position')
         self.char_nodes.append(self.tag_text)
     
@@ -160,17 +168,13 @@ class Tag(object):
         
         # 1. Stop all current color animations
         for char_node in self.char_nodes:
-            # We use a trick to force stop the 'color' array animation
-            # and reset the color to white so the new animation starts cleanly.
+            # Force stop and reset color
             babase.animate(char_node, 'color', {0: (1.0, 1.0, 1.0)}, repeat=False, end_time=0.0)
             
         tag_length = len(self.char_nodes)
-        
-        # --- Common Animation Parameters ---
         animation_duration = 1.0
         delay_per_character = 0.05
         
-        # --- Premium Color Palette (Vibrant Glow) ---
         premium_colors = {
             0.0: (3.0, 0.5, 0.0), # Fiery Orange/Red Glow
             0.2: (2.0, 2.0, 0.0), # Bright Yellow Glow
@@ -191,7 +195,6 @@ class Tag(object):
         # --- Style 2: Fire Wave (Right -> Left) ---
         elif style_id == 2:
             for i, char_node in enumerate(self.char_nodes):
-                # Reverse the index to reverse the flow direction
                 reverse_index = tag_length - 1 - i
                 start_delay = reverse_index * delay_per_character
                 bs.animate_array(node=char_node, attr='color', size=3, keys={
@@ -203,11 +206,9 @@ class Tag(object):
             center_index = (tag_length - 1) / 2.0
             
             for i, char_node in enumerate(self.char_nodes):
-                # Delay increases the further the character is from the center
                 distance_from_center = abs(i - center_index)
                 start_delay = distance_from_center * delay_per_character
                 
-                # Use a specific pulse-like color key for Heartbeat
                 heartbeat_colors = {
                     0.0: (1.0, 1.0, 1.0), # White
                     0.4: (3.0, 0.0, 0.0), # Bright Red Pulse
@@ -223,6 +224,7 @@ class Tag(object):
     def animate_death_flow(self):
         """
         Triggers a spectacular color flow and fade-out upon player death.
+        Saves the next style ID (logic not shown but implied).
         """
         if not sett["enableTagAnimation"]:
             self.delete_mnodes()
@@ -236,36 +238,21 @@ class Tag(object):
             0.20: (5.0, 5.0, 5.0)   # Final, massive white burst
         }
         
-        # Apply the death animation to each character with a sequential delay (L->R)
         for i, char_node in enumerate(self.char_nodes):
-            # Stop the loop animation before applying the one-shot death animation
             babase.animate(char_node, 'scale', {0: char_node.scale}, repeat=False) 
-            
-            start_delay = i * 0.03 # Faster delay for a quick death flow
+            start_delay = i * 0.03 
             
             bs.animate_array(node=char_node, attr='color', size=3, keys={
                 t + start_delay: color for t, color in death_keys.items()
             })
             
-            # Delete text node after its animation is done
             bs.Timer(0.3 + start_delay, char_node.delete)
         
         # Delete math nodes after all characters are gone
         bs.Timer(0.3 + len(self.char_nodes) * 0.04, self.delete_mnodes)
         
         # Calculate the next style ID for the player's next spawn
-        # Cycles 1 -> 2 -> 3 -> 1
         next_style = (self.current_style % 3) + 1
-        
-        # IMPORTANT: This next step requires saving the 'next_style' somewhere
-        # accessible by the player's Spaz/SessionPlayer object (e.g., player data).
-        # You need to implement a mechanism in your main Spaz/Player code to:
-        # 1. Store this 'next_style' value.
-        # 2. Retrieve it when 'addtag' is called again on respawn.
-        #
-        # Example of what you would do in your player/spaz class:
-        # spaz.sessionplayer.tag_next_style = next_style
-        # The 'addtag' function above is now ready to receive this via 'style_override'.
         
     def delete_mnodes(self):
         """Cleans up the math nodes after the text nodes are gone."""
@@ -274,6 +261,7 @@ class Tag(object):
 
 
 # --- Rank Class (Kept the same) ---
+
 class Rank(object):
     def __init__(self, owner=None, rank=99):
         self.node = owner
@@ -308,6 +296,7 @@ class Rank(object):
 
 
 # --- HitPoint Class (Kept the same) ---
+
 class HitPoint(object):
     def __init__(self, position=(0, 1.5, 0), owner=None, prefix='0', shad=1.2):
         self.position = position
