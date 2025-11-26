@@ -8,8 +8,6 @@ import bascenev1 as bs
 sett = setting.get_settings_data()
 
 
-# (Functions addtag, addrank, addhp remain the same)
-# ...
 def addtag(node, player):
     session_player = player.sessionplayer
     account_id = session_player.get_v1_account_id()
@@ -52,14 +50,12 @@ def addhp(node, spaz):
             spaz.hptimer = None
     spaz.hptimer = bs.Timer(2, babase.Call(
         showHP), repeat=True)
-# ...
 
 
 class Tag(object):
     def __init__(self, owner=None, tag="somthing", col=(1, 1, 1)):
         self.node = owner
 
-        # Create the primary math node to link the tag to the player's torso
         mnode = bs.newnode('math',
                            owner=self.node,
                            attrs={
@@ -87,40 +83,6 @@ class Tag(object):
             tag = tag.replace('\\a', ('\ue020'))
             tag = tag.replace('\\b', ('\ue00c'))
 
-        # --- SECONDARY TEXT NODE: HOLOGRAM SHADOW ---
-        # This node is slightly offset (0.05 on Z-axis) to create a 3D effect.
-        if sett["enableTagAnimation"]:
-            # Secondary math node for hologram offset
-            mnode_holo = bs.newnode('math',
-                                    owner=self.node,
-                                    attrs={
-                                        'input1': (0, 1.5, 0.05), # Offset in Z for 3D look
-                                        'operation': 'add'
-                                    })
-            self.node.connectattr('torso_position', mnode_holo, 'input2')
-            
-            self.tag_text_holo = bs.newnode('text',
-                                            owner=self.node,
-                                            attrs={
-                                                'text': tag,
-                                                'in_world': True,
-                                                'shadow': 0.0, # Less shadow for cleaner look
-                                                'flatness': 1.0,
-                                                'color': (0.0, 2.0, 2.0), # Fixed contrasting color (Cyan)
-                                                'scale': 0.011, # Slightly larger scale
-                                                'h_align': 'center'
-                                            })
-            mnode_holo.connectattr('output', self.tag_text_holo, 'position')
-            
-            # FAST PULSE ANIMATION for the hologram shadow
-            bs.animate_array(node=self.tag_text_holo, attr='color', size=3, keys={
-                0.0: (0.0, 2.0, 2.0),
-                0.5: (0.5, 0.5, 2.0),
-                1.0: (0.0, 2.0, 2.0)
-            }, loop=True)
-
-
-        # --- PRIMARY TEXT NODE: MAIN GRADIENT ---
         self.tag_text = bs.newnode('text',
                                    owner=self.node,
                                    attrs={
@@ -134,20 +96,25 @@ class Tag(object):
                                    })
         mnode.connectattr('output', self.tag_text, 'position')
         
-        # SLOW, SMOOTH GRADIENT ANIMATION for the main text
+        # --- FAST MULTI-COLOR WAVE ANIMATION START ---
+        # A quick cycle (0.8 seconds total) with many high-contrast points 
+        # to create a dazzling, 'left-to-right' visual motion effect.
         if sett["enableTagAnimation"]:
             bs.animate_array(node=self.tag_text, attr='color', size=3, keys={
-                0.0: (2.0, 0.5, 1.5),  # Bright Pink/Red
-                1.0: (0.5, 1.5, 2.0),  # Bright Cyan/Blue
-                2.0: (2.0, 2.0, 0.5),  # Bright Yellow/Gold
-                3.0: (2.0, 0.5, 0.5),  # Bright Red
-                4.0: (2.0, 0.5, 1.5)   # Loop back smoothly
+                0.0: (2.0, 0.0, 1.0),  # Bright Magenta
+                0.1: (2.0, 1.5, 0.0),  # Bright Orange/Gold
+                0.2: (0.0, 2.0, 0.5),  # Bright Green/Cyan
+                0.3: (0.0, 1.5, 2.0),  # Bright Blue
+                0.4: (2.0, 0.0, 0.0),  # Bright Red
+                0.5: (2.0, 2.0, 2.0),  # Pure White Flash
+                0.6: (1.5, 0.0, 2.0),  # Purple
+                0.8: (2.0, 0.0, 1.0)   # Loop back to Magenta
             }, loop=True)
+        # --- FAST MULTI-COLOR WAVE ANIMATION END ---
 
 
-# (Rank and HitPoint classes remain the same)
-# ...
 class Rank(object):
+# (The Rank class remains the same)
     def __init__(self, owner=None, rank=99):
         self.node = owner
         mnode = bs.newnode('math',
@@ -181,6 +148,7 @@ class Rank(object):
 
 
 class HitPoint(object):
+# (The HitPoint class remains the same)
     def __init__(self, position=(0, 1.5, 0), owner=None, prefix='0', shad=1.2):
         self.position = position
         self.node = owner
