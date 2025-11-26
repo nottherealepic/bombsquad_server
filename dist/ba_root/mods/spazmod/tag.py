@@ -64,7 +64,7 @@ class Tag(object):
                            })
         self.node.connectattr('torso_position', mnode, 'input2')
         
-        # Icon replacement logic (same as before)
+        # Icon replacement logic
         if '\\' in tag:
             tag = tag.replace('\\d', ('\ue048'))
             tag = tag.replace('\\c', ('\ue043'))
@@ -96,25 +96,25 @@ class Tag(object):
                                    })
         mnode.connectattr('output', self.tag_text, 'position')
         
-        # --- FAST MULTI-COLOR WAVE ANIMATION START ---
-        # A quick cycle (0.8 seconds total) with many high-contrast points 
-        # to create a dazzling, 'left-to-right' visual motion effect.
+        # --- HIGH-ENERGY WAVE SIMULATION ANIMATION START ---
+        # A 2.0 second cycle with 9 keyframes to create complex, dazzling color transitions.
+        # High-value colors (>1.0) provide the bright, glowing 'premium' look.
         if sett["enableTagAnimation"]:
             bs.animate_array(node=self.tag_text, attr='color', size=3, keys={
-                0.0: (2.0, 0.0, 1.0),  # Bright Magenta
-                0.1: (2.0, 1.5, 0.0),  # Bright Orange/Gold
-                0.2: (0.0, 2.0, 0.5),  # Bright Green/Cyan
-                0.3: (0.0, 1.5, 2.0),  # Bright Blue
-                0.4: (2.0, 0.0, 0.0),  # Bright Red
-                0.5: (2.0, 2.0, 2.0),  # Pure White Flash
-                0.6: (1.5, 0.0, 2.0),  # Purple
-                0.8: (2.0, 0.0, 1.0)   # Loop back to Magenta
+                0.0: (2.0, 0.5, 1.5),  # Deep Pink/Red (Wave Start)
+                0.2: (0.5, 2.0, 2.0),  # Bright Cyan/Aqua (Wave Crest)
+                0.4: (2.0, 2.0, 0.5),  # Bright Yellow/Gold (Sunlight on Wave)
+                0.6: (0.5, 1.5, 0.5),  # Green/Lime (Randomized Color)
+                0.8: (2.0, 0.0, 0.0),  # Strong Red (Burst Effect)
+                1.1: (1.0, 1.0, 2.0),  # Light Blue/White (Wave Foam)
+                1.4: (2.0, 1.5, 0.0),  # Bright Orange/Gold (Sunset Color)
+                1.7: (0.0, 2.0, 0.0),  # Vibrant Green
+                2.0: (2.0, 0.5, 1.5)   # Loop back to Deep Pink/Red
             }, loop=True)
-        # --- FAST MULTI-COLOR WAVE ANIMATION END ---
+        # --- HIGH-ENERGY WAVE SIMULATION ANIMATION END ---
 
 
 class Rank(object):
-# (The Rank class remains the same)
     def __init__(self, owner=None, rank=99):
         self.node = owner
         mnode = bs.newnode('math',
@@ -148,7 +148,6 @@ class Rank(object):
 
 
 class HitPoint(object):
-# (The HitPoint class remains the same)
     def __init__(self, position=(0, 1.5, 0), owner=None, prefix='0', shad=1.2):
         self.position = position
         self.node = owner
