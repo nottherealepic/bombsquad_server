@@ -8,7 +8,8 @@
    "max_party_size": 10,
    "session_max_players_override": 10,
    "session_type": "teams",
-   "playlist_code": 572995,
+   "playlist_code": null,
+   "playlist_name": "Divine_Lobby",
    "playlist_shuffle": false,
    "auto_balance_teams": true,
    "enable_telnet": false,
@@ -22,14 +23,8 @@
    "unclean_exit_minutes": 9999,
    "idle_exit_minutes": 0,
    "show_tutorial": false,
-   "team_names": [
-      "Red",
-      "Blue"
-   ],
-   "team_colors": [
-      [1, 0.2, 0.2],
-      [0.2, 0.2, 1]
-   ],
+   "team_names": ["Red", "Blue"],
+   "team_colors": [[1, 0.2, 0.2], [0.2, 0.2, 1]],
    "enable_queue": true,
    "protocol_version": 35,
    "player_rejoin_cooldown": 5.0
