@@ -1,5 +1,5 @@
 {
-   "party_name":"⚽ | BARCELONAvsREAL MADRID | ⚽",
+   "party_name":"TEST",
    "party_is_public":true,
    "authenticate_clients":true,
    "admins":[
@@ -10,7 +10,7 @@
    "max_party_size":13,
    "session_max_players_override":15,
    "session_type":"soccer",
-   "playlist_code":569612,
+   "playlist_code":572990,
    "playlist_shuffle":true,
    "auto_balance_teams":true,
    "enable_telnet":false,
