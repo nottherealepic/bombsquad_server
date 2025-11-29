@@ -19,8 +19,8 @@
    "teams_series_length": 1,
    "ffa_series_length": 1,
    "stats_url": "",
-   "clean_exit_minutes": 0,
-   "unclean_exit_minutes": 0,
+   "clean_exit_minutes": 9999,
+   "unclean_exit_minutes": 9999,
    "idle_exit_minutes": 0,
    "show_tutorial": false,
    "team_names": [
