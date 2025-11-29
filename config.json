@@ -1,46 +1,37 @@
 {
-   "party_name":"TEST",
-   "party_is_public":true,
-   "authenticate_clients":true,
-   "admins":[
-      ""
-   ],
-   "enable_default_kick_voting":true,
-   "port":43210,
-   "max_party_size":13,
-   "session_max_players_override":15,
-   "session_type":"soccer",
-   "playlist_code":572990,
-   "playlist_shuffle":true,
-   "auto_balance_teams":true,
-   "enable_telnet":false,
+   "party_name": "👑 CREATE FREE SERVER",
+   "party_is_public": true,
+   "authenticate_clients": true,
+   "admins": [],
+   "enable_default_kick_voting": false,
+   "port": 43210,
+   "max_party_size": 10,
+   "session_max_players_override": 10,
+   "session_type": "teams",
+   "playlist_code": null,
+   "playlist_name": "Divine_Lobby",
+   "playlist_shuffle": false,
+   "auto_balance_teams": true,
+   "enable_telnet": false,
    "enable_rcon": true,
    "rcon_port": 43210,
    "rcon_password": "Adar@2004",
-   "teams_series_length":7,
-   "ffa_series_length":24,
-   "stats_url":"https://discord.gg/lego",
-   "clean_exit_minutes":60,
-   "unclean_exit_minutes":90,
-   "idle_exit_minutes":20,
-   "show_tutorial":false,
-   "team_names":[
-      "FCB",
-      "RM"
+   "teams_series_length": 1,
+   "ffa_series_length": 1,
+   "stats_url": "",
+   "clean_exit_minutes": 0,
+   "unclean_exit_minutes": 0,
+   "idle_exit_minutes": 0,
+   "show_tutorial": false,
+   "team_names": [
+      "Red",
+      "Blue"
    ],
-   "team_colors":[
-      [
-         0.6,
-         0.0,
-         0.8
-      ],
-      [
-         1,
-         1,
-         1
-      ]
+   "team_colors": [
+      [1, 0.2, 0.2],
+      [0.2, 0.2, 1]
    ],
-   "enable_queue":true,
-   "protocol_version":35,
-   "player_rejoin_cooldown":10.0
+   "enable_queue": true,
+   "protocol_version": 35,
+   "player_rejoin_cooldown": 5.0
 }
