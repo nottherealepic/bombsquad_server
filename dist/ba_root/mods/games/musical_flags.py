@@ -9,7 +9,6 @@ import random
 import math
 from bascenev1lib.actor.flag import Flag, FlagPickedUpMessage
 from bascenev1lib.actor.playerspaz import PlayerSpaz
-# Using correct API 8 bot names
 from bascenev1lib.actor.spazbot import SpazBotSet, BomberBot, BrawlerBot
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import Blast
@@ -21,13 +20,13 @@ class Player(bs.Player['Team']):
     """Our player type for this game."""
     def __init__(self) -> None:
         self.survived = True
+        self.accumscore = 0 # Fixed: Added this so scoring doesn't crash
 
 class Team(bs.Team[Player]):
     """Our team type for this game."""
     def __init__(self) -> None:
         self.score = 0
 
-# Renamed class to MFGame to match your playlist config
 class MFGame(bs.TeamGameActivity[Player, Team]):
     name = 'Musical Flags'
     description = "Get a Flag or Explode!"
@@ -80,9 +79,11 @@ class MFGame(bs.TeamGameActivity[Player, Team]):
         self._flags = []
         self._round_active_players = []
         
+        # Update survivor list
         self._tournament_survivors = [p for p in self._tournament_survivors if p.exists()]
         survivor_count = len(self._tournament_survivors)
 
+        # If less than 2 players, end the game
         if survivor_count < 2:
             self.end_game_scoring()
             return
@@ -107,7 +108,7 @@ class MFGame(bs.TeamGameActivity[Player, Team]):
         for i, player in enumerate(self._tournament_survivors):
             self._round_active_players.append(player)
             z_pos = -1.0 if i == 0 else 1.0
-            self.spawn_player_spaz(player, position=(p_x, 2, z_pos))
+            self.spawn_and_position_player(player, position=(p_x, 2, z_pos))
             
         PopupText("GO!", position=(0, 5, 0), scale=2.0, color=(0,1,0)).autoretain()
 
@@ -126,9 +127,10 @@ class MFGame(bs.TeamGameActivity[Player, Team]):
         # Players in Center Pile
         for player in self._tournament_survivors:
             self._round_active_players.append(player)
-            self.spawn_player_spaz(player, position=(0, 2.5, 0))
+            self.spawn_and_position_player(player, position=(0, 2.5, 0))
 
-    def spawn_player_spaz(self, player: Player, position: tuple) -> None:
+    # Fixed: Renamed function to avoid overriding built-in method incorrectly
+    def spawn_and_position_player(self, player: Player, position: tuple) -> None:
         spaz = self.spawn_player(player)
         spaz.connect_controls_to_player(enable_punch=True, enable_bomb=False, enable_pickup=False)
         spaz.handlemessage(bs.StandMessage(position))
@@ -184,7 +186,7 @@ class MFGame(bs.TeamGameActivity[Player, Team]):
              bs.timer(0.1, lambda: loser.actor.handlemessage(bs.FreezeMessage()) if loser.actor else None)
              bs.timer(1.0, lambda: loser.actor.handlemessage(bs.ThawMessage()) if loser.actor else None)
         else:
-            self.spawn_player_spaz(loser, (0, 2, 0))
+            self.spawn_and_position_player(loser, (0, 2, 0))
         
         bs.playsound(bs.getsound('shieldDown'))
         self._bots.spawn_bot(BomberBot, pos=(3, 2, 0), spawn_time=0.5)
@@ -237,7 +239,7 @@ class MFGame(bs.TeamGameActivity[Player, Team]):
             points = points_map.get(i, 0)
             if points > 0:
                 player.team.score += points
-                player.accumscore += points
+                player.accumscore += points # Fixed attribute error
                 bs.broadcastmessage(f"#{i+1} {player.getname()}: +{points} pts", color=player.color)
         
         results = bs.GameResults()
