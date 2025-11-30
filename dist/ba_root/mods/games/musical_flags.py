@@ -1,312 +1,277 @@
-# Made by MattZ45986 on GitHub
-# Ported by your friend: Freaku
-
-
-# Bug Fixes & Improvements as well...
-
-# Join BCS:
-# https://discord.gg/ucyaesh
-
+# ba_meta require api 8
+# ba_meta export bascenev1.GameActivity
 
 from __future__ import annotations
+from typing import TYPE_CHECKING, List, Any
 
-import math
-import random
-
-from typing import TYPE_CHECKING
-
-import bascenev1
 import bascenev1 as bs
+import random
+import math
 from bascenev1lib.actor.flag import Flag, FlagPickedUpMessage
 from bascenev1lib.actor.playerspaz import PlayerSpaz
+from bascenev1lib.actor.spazbot import SpazBotSet, TntBot, BrawlerBotLite, BunnyBot
+from bascenev1lib.actor.popuptext import PopupText
+from bascenev1lib.actor.bomb import Blast
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Union, Sequence
-
+    from typing import Sequence
 
 class Player(bs.Player['Team']):
+    """Our player type for this game."""
     def __init__(self) -> None:
-        self.done: bool = False
-        self.survived: bool = True
-
+        self.survived = True
 
 class Team(bs.Team[Player]):
+    """Our team type for this game."""
     def __init__(self) -> None:
         self.score = 0
 
-
-# ba_meta require api 8
-# ba_meta export bascenev1.GameActivity
-class MFGame(bs.TeamGameActivity[Player, Team]):
+class MusicalFlagsGame(bs.TeamGameActivity[Player, Team]):
     name = 'Musical Flags'
-    description = "Don't be the one stuck without a flag!"
+    description = "Get a Flag or Explode!"
+    
+    @classmethod
+    def get_supported_maps(cls, sessiontype: type[bs.Session]) -> List[str]:
+        # We need maps with open space for the circles
+        return ['Doom Shroom', 'Football Stadium', 'Hockey Arena', 'Courtyard']
 
     @classmethod
-    def get_available_settings(
-        cls, sessiontype: Type[bs.Session]) -> list[bascenev1.Setting]:
-        settings = [
-            bs.IntSetting(
-                'Max Round Time',
-                min_value=15,
-                default=25,
-                increment=5,
-            ),
+    def get_available_settings(cls, sessiontype: type[bs.Session]) -> list[bs.Setting]:
+        return [
             bs.BoolSetting('Epic Mode', default=False),
-            bs.BoolSetting('Enable Running', default=True),
-            bs.BoolSetting('Enable Punching', default=False),
-            bs.BoolSetting('Enable Bottom Credit', True)
         ]
-        return settings
 
     @classmethod
-    def supports_session_type(cls, sessiontype: Type[bs.Session]) -> bool:
-        return (issubclass(sessiontype, bs.DualTeamSession)
-                or issubclass(sessiontype, bs.FreeForAllSession))
-
-    @classmethod
-    def get_supported_maps(cls, sessiontype: Type[bs.Session]) -> List[str]:
-        return ['Doom Shroom']
+    def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
+        return issubclass(sessiontype, bs.FreeForAllSession) or issubclass(sessiontype, bs.DualTeamSession)
 
     def __init__(self, settings: dict):
         super().__init__(settings)
-        self.nodes = []
-        self._dingsound = bs.getsound('dingSmall')
-        self._epic_mode = bool(settings['Epic Mode'])
-        self.credit_text = bool(settings['Enable Bottom Credit'])
-        self.is_punch = bool(settings['Enable Punching'])
-        self.is_run = bool(settings['Enable Running'])
-
-        self._textRound = bs.newnode('text',
-                                     attrs={'text': '',
-                                            'position': (0, -38),
-                                            'scale': 1,
-                                            'shadow': 1.0,
-                                            'flatness': 1.0,
-                                            'color': (1.0, 0.0, 1.0),
-                                            'opacity': 1,
-                                            'v_attach': 'top',
-                                            'h_attach': 'center',
-                                            'h_align': 'center',
-                                            'v_align': 'center'})
-        self.round_time = int(settings['Max Round Time'])
-        self.reset_round_time = int(settings['Max Round Time'])
-        self.should_die_occur = True
-        self.round_time_textnode = bs.newnode('text',
-                                              attrs={
-                                                  'text': "", 'flatness': 1.0,
-                                                  'h_align': 'center',
-                                                  'h_attach': 'center',
-                                                  'v_attach': 'top',
-                                                  'v_align': 'center',
-                                                  'position': (0, -15),
-                                                  'scale': 0.9,
-                                                  'color': (1, 0.7, 0.9)})
-
-        self.slow_motion = self._epic_mode
-        # A cool music, matching our gamemode theme
         self.default_music = bs.MusicType.FLAG_CATCHER
-
-    def get_instance_description(self) -> Union[str, Sequence]:
-        return 'Catch Flag for yourself'
-
-    def get_instance_description_short(self) -> Union[str, Sequence]:
-        return 'Catch Flag for yourself'
-
-    def on_player_join(self, player: Player) -> None:
-        if self.has_begun():
-            bs.broadcastmessage(
-                bs.Lstr(resource='playerDelayedJoinText',
-                        subs=[('${PLAYER}', player.getname(full=True))]),
-                color=(0, 1, 0), transient=True)
-            player.survived = False
-            return
-        self.spawn_player(player)
-
-    def on_player_leave(self, player: Player) -> None:
-        super().on_player_leave(player)
-        # A departing player may trigger game-over.
-        bs.timer(0, self.checkEnd)
+        self._round_num = 0
+        self._flags: List[Flag] = []
+        self._bots = SpazBotSet()
+        
+        # Track the tournament state
+        self._tournament_survivors: List[Player] = [] # Players still in the game
+        self._eliminated_order: List[Player] = []     # Players kicked out (for scoring)
+        self._round_active_players: List[Player] = [] # Players running in current round
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.roundNum = 0
-        self.numPickedUp = 0
-        self.nodes = []
-        self.flags = []
-        self.spawned = []
-        if self.credit_text:
-            t = bs.newnode('text',
-                           attrs={
-                               'text': "Ported by Freaku\nMade by MattZ45986",
-                               # Disable 'Enable Bottom Credits' when making playlist, No need to edit this lovely...
-                               'scale': 0.7,
-                               'position': (0, 0),
-                               'shadow': 0.5,
-                               'flatness': 1.2,
-                               'color': (1, 1, 1),
-                               'h_align': 'center',
-                               'v_attach': 'bottom'})
-        self.makeRound()
-        self._textRound.text = 'Round ' + str(self.roundNum)
-        bs.timer(3, self.checkEnd)
-        self.keepcalling = bs.timer(1, self._timeround, True)
+        # At start, everyone is a survivor
+        self._tournament_survivors = [p for p in self.players if p.exists()]
+        self.setup_next_round()
 
-    def _timeround(self):
-        if self.round_time == 0 and self.should_die_occur:
-            self.should_die_occur = False
-            self.round_time_textnode.opacity = 0
-            bs.broadcastmessage('Proceeding Round...')
-            for player in self.spawned:
-                if not player.done:
-                    try:
-                        player.survived = False
-                        player.actor.handlemessage(bs.StandMessage((0, 3, -2)))
-                        bs.timer(0.5, bs.Call(player.actor.handlemessage,
-                                              bs.FreezeMessage()))
-                        bs.timer(1.5, bs.Call(player.actor.handlemessage,
-                                              bs.FreezeMessage()))
-                        bs.timer(2.5, bs.Call(player.actor.handlemessage,
-                                              bs.FreezeMessage()))
-                        bs.timer(3, bs.Call(player.actor.handlemessage,
-                                            bs.ShouldShatterMessage()))
-                    except:
-                        pass
-            bs.timer(3.5, self.killRound)
-            bs.timer(3.55, self.makeRound)
-            self.round_time_textnode.opacity = 0
-            self.round_time = self.reset_round_time
+    def on_player_leave(self, player: Player) -> None:
+        # If a player leaves, remove them from lists so the game doesn't glitch
+        if player in self._tournament_survivors:
+            self._tournament_survivors.remove(player)
+        if player in self._round_active_players:
+            self._round_active_players.remove(player)
+            # Check if the round needs to end because someone left
+            if len(self._round_active_players) == 1:
+                self.start_punishment(self._round_active_players[0])
+            elif len(self._round_active_players) == 0:
+                bs.timer(1.0, self.setup_next_round)
+        super().on_player_leave(player)
+
+    def setup_next_round(self) -> None:
+        # 1. Cleanup previous round items
+        self._bots.clear()
+        for flag in self._flags:
+            if flag.node: flag.node.delete()
+        self._flags = []
+        self._round_active_players = []
+        
+        # 2. Check valid survivors
+        self._tournament_survivors = [p for p in self._tournament_survivors if p.exists()]
+        survivor_count = len(self._tournament_survivors)
+
+        # 3. Game Over / Scoring Check
+        if survivor_count < 2:
+            self.end_game_scoring()
+            return
+
+        self._round_num += 1
+        bs.broadcastmessage(f"ROUND {self._round_num}", color=(1, 1, 0))
+
+        # 4. Decide Round Type
+        if survivor_count == 2:
+            self.setup_duel_round()
         else:
-            self.round_time_textnode.text = "Time: " + str(self.round_time)
-            self.round_time -= 1
+            self.setup_circle_round(survivor_count)
 
-    def makeRound(self):
-        for player in self.players:
-            if player.survived:
-                player.team.score += 1
-        self.roundNum += 1
-        self._textRound.text = 'Round ' + str(self.roundNum)
-        self.flags = []
-        self.spawned = []
-        self.should_die_occur = True
-        self.round_time = self.reset_round_time
-        self.round_time_textnode.opacity = 1
-        angle = random.randint(0, 359)
-        c = 0
-        for player in self.players:
-            if player.survived:
-                c += 1
-        spacing = 10
-        for player in self.players:
-            player.done = False
-            if player.survived:
-                if not player.is_alive():
-                    self.spawn_player(player, (.5, 5, -4))
-                self.spawned.append(player)
-        try:
-            spacing = 360 // (c)
-        except:
-            self.checkEnd()
-        colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1),
-                  (0, 1, 1), (0, 0, 0),
-                  (0.5, 0.8, 0), (0, 0.8, 0.5), (0.8, 0.25, 0.7),
-                  (0, 0.27, 0.55), (2, 2, 0.6), (0.4, 3, 0.85)]
+    def setup_duel_round(self) -> None:
+        # --- FINAL ROUND LOGIC (1v1) ---
+        # Players at Edge, Flag at other Edge
+        bs.broadcastmessage("FINAL DUEL!", color=(1, 0, 0), transient=True)
+        
+        p_x = -10.0 # Player spawn X
+        f_x = 10.0  # Flag spawn X
+        
+        # Spawn 1 Flag
+        self._flags.append(Flag(position=(f_x, 2, 0), color=(1, 1, 1), touchable=True))
+        
+        # Spawn 2 Players
+        for i, player in enumerate(self._tournament_survivors):
+            self._round_active_players.append(player)
+            z_pos = -1.0 if i == 0 else 1.0
+            self.spawn_player_spaz(player, position=(p_x, 2, z_pos))
+            
+        PopupText("GO!", position=(0, 5, 0), scale=2.0, color=(0,1,0)).autoretain()
 
-        # Add support for more than 13 players
-        if c > 12:
-            for i in range(c - 12):
-                colors.append((random.uniform(0.1, 1), random.uniform(
-                    0.1, 1), random.uniform(0.1, 1)))
+    def setup_circle_round(self, count: int) -> None:
+        # --- NORMAL ROUND LOGIC ---
+        # Players in Center Pile, Flags in Outer Circle
+        flag_count = count - 1
+        
+        # 1. Spawn Flags in LARGE Outer Circle (Radius 7.0)
+        for i in range(flag_count):
+            angle = (i / flag_count) * 360
+            x = 7.0 * math.cos(math.radians(angle))
+            z = 7.0 * math.sin(math.radians(angle))
+            flg = Flag(position=(x, 2.5, z), color=(0, 1, 0), touchable=True)
+            self._flags.append(flg)
+            
+        # 2. Spawn ALL Players in EXACT CENTER
+        # They will push each other, creating chaos
+        for player in self._tournament_survivors:
+            self._round_active_players.append(player)
+            self.spawn_player_spaz(player, position=(0, 2.5, 0))
 
-        # Smart Mathematics:
-        # All Flags spawn same distance from the players
-        for i in range(c - 1):
-            angle += spacing
-            angle %= 360
-            x = 6 * math.sin(math.degrees(angle))
-            z = 6 * math.cos(math.degrees(angle))
-            flag = Flag(position=(x + .5, 5, z - 4),
-                        color=colors[i]).autoretain()
-            self.flags.append(flag)
-
-    def killRound(self):
-        self.numPickedUp = 0
-        for player in self.players:
-            if player.is_alive():
-                player.actor.handlemessage(bs.DieMessage())
-        for flag in self.flags:
-            flag.node.delete()
-        for light in self.nodes:
-            light.delete()
-
-    def spawn_player(self, player: Player, pos: tuple = (0, 0, 0)) -> bs.Actor:
-        spaz = self.spawn_player_spaz(player)
-        if pos == (0, 0, 0):
-            pos = (-.5 + random.random() * 2, 3 + random.random() * 2,
-                   -5 + random.random() * 2)
-        spaz.connect_controls_to_player(enable_punch=self.is_punch,
-                                        enable_bomb=False,
-                                        enable_run=self.is_run)
-        spaz.handlemessage(bs.StandMessage(pos))
-        return spaz
-
-    def check_respawn(self, player):
-        if not player.done and player.survived:
-            self.respawn_player(player, 2.5)
+    def spawn_player_spaz(self, player: Player, position: tuple) -> None:
+        spaz = self.spawn_player(player)
+        # Allow punching/running, but no bombs/pickup
+        spaz.connect_controls_to_player(enable_punch=True, enable_bomb=False, enable_pickup=False)
+        spaz.handlemessage(bs.StandMessage(position))
+        
+        # Random facing if in center
+        angle = random.uniform(0, 360)
+        if position[0] == -10: angle = 0 # Face flag in duel
+        spaz.handlemessage(bs.StandMessage(position, angle=angle))
 
     def handlemessage(self, msg: Any) -> Any:
+        if isinstance(msg, FlagPickedUpMessage):
+            node = msg.node
+            flag = msg.flag
+            
+            try:
+                player = node.getdelegate(PlayerSpaz, True).getplayer(Player, True)
+            except Exception:
+                return None
 
-        if isinstance(msg, bs.PlayerDiedMessage):
-            super().handlemessage(msg)
+            if player in self._round_active_players:
+                # --- PLAYER IS SAFE ---
+                bs.playsound(bs.getsound('corkPop'))
+                PopupText("SAFE!", position=node.position, color=(0,1,0), scale=1.6).autoretain()
+                
+                # Remove Flag
+                flag.node.delete()
+                if flag in self._flags:
+                    self._flags.remove(flag)
+                
+                # Remove Player from map (Safe)
+                self._round_active_players.remove(player)
+                node.handlemessage(bs.DieMessage(how=bs.DeathType.GENERIC)) 
+                
+                # If only 1 player left in the arena -> They are the Loser
+                if len(self._round_active_players) == 1:
+                    self.start_punishment(self._round_active_players[0])
+            
+            return None # Don't let them hold the flag
+
+        elif isinstance(msg, bs.PlayerDiedMessage):
             player = msg.getplayer(Player)
-            bs.timer(0.1, bs.Call(self.check_respawn, player))
-            bs.timer(0.5, self.checkEnd)
-        elif isinstance(msg, FlagPickedUpMessage):
-            self.numPickedUp += 1
-            msg.node.getdelegate(PlayerSpaz, True).getplayer(Player,
-                                                             True).done = True
-            l = bs.newnode('light',
-                           owner=None,
-                           attrs={'color': msg.node.color,
-                                  'position': (msg.node.position_center),
-                                  'intensity': 1})
-            self.nodes.append(l)
-            msg.flag.handlemessage(bs.DieMessage())
-            msg.node.handlemessage(bs.DieMessage())
-            msg.node.delete()
-            if self.numPickedUp == len(self.flags):
-                self.round_time_textnode.opacity = 0
-                self.round_time = self.reset_round_time
-                for player in self.spawned:
-                    if not player.done:
-                        try:
-                            player.survived = False
-                            bs.broadcastmessage("No Flag? " + player.getname())
-                            player.actor.handlemessage(
-                                bs.StandMessage((0, 3, -2)))
-                            bs.timer(0.5, bs.Call(player.actor.handlemessage,
-                                                  bs.FreezeMessage()))
-                            bs.timer(3, bs.Call(player.actor.handlemessage,
-                                                bs.ShouldShatterMessage()))
-                        except:
-                            pass
-                bs.timer(3.5, self.killRound)
-                bs.timer(3.55, self.makeRound)
+            # If they die while running (fall off map)
+            if player in self._round_active_players:
+                self._round_active_players.remove(player)
+                self.eliminate_player(player)
+                
+                if len(self._round_active_players) == 1:
+                    self.start_punishment(self._round_active_players[0])
+                elif len(self._round_active_players) == 0:
+                     bs.timer(2.0, self.setup_next_round)
+
+        return super().handlemessage(msg)
+
+    # --- KILLING LOGIC ---
+    def start_punishment(self, loser: Player) -> None:
+        bs.broadcastmessage(f"{loser.getname()} ELIMINATED!", color=(1, 0, 0))
+        
+        # 1. Teleport to Center
+        if loser.actor and loser.actor.node:
+             loser.actor.handlemessage(bs.StandMessage(position=(0, 2, 0)))
+             # Freeze briefly so they don't run away immediately
+             bs.timer(0.1, lambda: loser.actor.handlemessage(bs.FreezeMessage()) if loser.actor else None)
+             bs.timer(1.0, lambda: loser.actor.handlemessage(bs.ThawMessage()) if loser.actor else None)
         else:
-            return super().handlemessage(msg)
-        return None
+            self.spawn_player_spaz(loser, (0, 2, 0))
+        
+        # 2. Spawn Angry Bots
+        bs.playsound(bs.getsound('shieldDown'))
+        self._bots.spawn_bot(TntBot, pos=(3, 2, 0), spawn_time=0.5)
+        self._bots.spawn_bot(BunnyBot, pos=(-3, 2, 0), spawn_time=0.5)
+        self._bots.spawn_bot(TntBot, pos=(0, 2, 3), spawn_time=0.5)
+        
+        # 3. 5 Second Fight Timer
+        self.countdown_tick(5, loser)
 
-    def checkEnd(self):
-        i = 0
-        for player in self.players:
-            if player.survived:
-                i += 1
-        if i <= 1:
-            for player in self.players:
-                if player.survived:
-                    player.team.score += 10
-            bs.timer(2.5, self.end_game)
+    def countdown_tick(self, time: int, victim: Player) -> None:
+        if time > 0:
+            PopupText(str(time), position=(0, 5, 0), scale=2.5, color=(1, 0, 0)).autoretain()
+            bs.playsound(bs.getsound('tick'))
+            bs.timer(1.0, bs.Call(self.countdown_tick, time - 1, victim))
+        else:
+            self.execute_victim(victim)
 
-    def end_game(self) -> None:
+    def execute_victim(self, victim: Player) -> None:
+        # 4. Massive Explosion (5x TNT)
+        pos = (0, 2, 0)
+        if victim.actor and victim.actor.node:
+            pos = victim.actor.node.position
+            
+        # Standard TNT radius is approx 2.0. We use 10.0 for 5x power.
+        bs.Blast(position=pos, blast_radius=10.0, blast_type='tnt').autoretain()
+        
+        if victim.actor:
+            victim.actor.handlemessage(bs.DieMessage())
+            
+        self.eliminate_player(victim)
+        self._bots.clear()
+        bs.timer(3.0, self.setup_next_round)
+
+    def eliminate_player(self, player: Player) -> None:
+        # Add to eliminated list (First added = Last place)
+        if player in self._tournament_survivors:
+            self._tournament_survivors.remove(player)
+            self._eliminated_order.append(player)
+
+    # --- POINT SYSTEM ---
+    def end_game_scoring(self) -> None:
+        winner = self._tournament_survivors[0] if self._tournament_survivors else None
+        
+        # Construct Standings: [1st, 2nd, 3rd...]
+        standings = []
+        if winner:
+            standings.append(winner)
+        # eliminated_order has first loser (last place) at index 0. We reverse it.
+        for p in reversed(self._eliminated_order):
+            standings.append(p)
+            
+        # Points: Top 1->10, Top 2->7, Top 3->5, Top 4->3, Top 5->1
+        points_map = {0: 10, 1: 7, 2: 5, 3: 3, 4: 1}
+        
+        bs.broadcastmessage("--- FINAL SCORES ---", color=(0.2, 1, 0.2))
+        
+        for i, player in enumerate(standings):
+            points = points_map.get(i, 0)
+            if points > 0:
+                player.team.score += points
+                # Accumscore shows up on the end screen player cards
+                player.accumscore += points
+                bs.broadcastmessage(f"#{i+1} {player.getname()}: +{points} pts", color=player.color)
+        
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)
