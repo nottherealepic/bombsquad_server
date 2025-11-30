@@ -9,7 +9,8 @@ import random
 import math
 from bascenev1lib.actor.flag import Flag, FlagPickedUpMessage
 from bascenev1lib.actor.playerspaz import PlayerSpaz
-from bascenev1lib.actor.spazbot import SpazBotSet, TntBot, BrawlerBotLite, BunnyBot
+# FIXED IMPORTS HERE: Changed TntBot to BomberBot, BrawlerBotLite to BrawlerBot
+from bascenev1lib.actor.spazbot import SpazBotSet, BomberBot, BrawlerBot
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import Blast
 
@@ -208,11 +209,11 @@ class MusicalFlagsGame(bs.TeamGameActivity[Player, Team]):
         else:
             self.spawn_player_spaz(loser, (0, 2, 0))
         
-        # 2. Spawn Angry Bots
+        # 2. Spawn Angry Bots (BomberBot and BrawlerBot)
         bs.playsound(bs.getsound('shieldDown'))
-        self._bots.spawn_bot(TntBot, pos=(3, 2, 0), spawn_time=0.5)
-        self._bots.spawn_bot(BunnyBot, pos=(-3, 2, 0), spawn_time=0.5)
-        self._bots.spawn_bot(TntBot, pos=(0, 2, 3), spawn_time=0.5)
+        self._bots.spawn_bot(BomberBot, pos=(3, 2, 0), spawn_time=0.5)
+        self._bots.spawn_bot(BrawlerBot, pos=(-3, 2, 0), spawn_time=0.5)
+        self._bots.spawn_bot(BomberBot, pos=(0, 2, 3), spawn_time=0.5)
         
         # 3. 5 Second Fight Timer
         self.countdown_tick(5, loser)
